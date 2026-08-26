@@ -48,31 +48,32 @@ Automate scenarios that verify the application handles bad input gracefully. At 
 
 ---
 
-## Getting Started
+# Getting Started
 
-### 1. Clone the Repository
+### 1. Fork the Repository
+Click the **Fork** button at the top right of this page to create your own copy of the repo under your GitHub account.
 
+### 2. Clone Your Fork
 ```bash
-git clone <repository-url>
+git clone https://github.com/your-github-username/IONA-test-automation-quiz.git
 cd cypress-test-automation-quiz
 ```
 
-### 2. Install Dependencies
-
+### 3. Install Dependencies
 ```bash
 npm install
 ```
 
-### 3. Create Your Branch
-
-**Important**: Always work on your own branch.
-
+### 4. Create Your Branch
+**Important**: Always work on your own branch. Use DD-MM-YYYY format for the date.
 ```bash
-git checkout -b your-name/date
+git checkout -b your-name/date-of-sumbission
 ```
-
 **Branch Naming Convention**: Use your name followed by a brief description, for example:
-- `john-doe/checkout-flow`
+- `john-doe/08-25-2026`
+
+### 5. Submit Your Work
+Once done, push your branch to your fork and open a **Pull Request** targeting the original `CodersForHire/IONA-test-automation-quiz` repository.
 
 ---
 
