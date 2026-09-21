@@ -57,4 +57,42 @@ describe('DemoBlaze - Authentication', () => {
         cy.get('#nameofuser')
             .should('not.be.visible')
     })
+
+    it('should reject login when username and password are empty', () => {
+        cy.get('#login2')
+            .should('be.visible')
+            .click()
+
+        cy.get('#logInModal')
+            .should('be.visible')
+
+        // Verify both fields are intentionally empty
+        cy.get('#loginusername')
+            .should('be.visible')
+            .and('have.value', '')
+
+        cy.get('#loginpassword')
+            .should('be.visible')
+            .and('have.value', '')
+
+        // Intercept login validation alert
+        cy.window().then((win) => {
+            cy.stub(win, 'alert').as('loginAlert')
+        })
+
+        cy.contains('#logInModal button', 'Log in')
+            .should('be.visible')
+            .and('be.enabled')
+            .click()
+
+        cy.get('@loginAlert')
+            .should(
+                'have.been.calledOnceWith',
+                'Please fill out Username and Password.'
+            )
+
+        // Verify authentication did not succeed
+        cy.get('#nameofuser')
+            .should('not.be.visible')
+    })
 })
