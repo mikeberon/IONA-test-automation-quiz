@@ -1,31 +1,46 @@
 /// <reference types="cypress" />
 
-// ***********************************************
-// This example commands.ts shows you how to
-// create various custom commands and overwrite
-// existing commands.
-//
-// For more comprehensive examples of custom
-// commands please read more here:
-// https://on.cypress.io/custom-commands
-// ***********************************************
-
 declare global {
-  namespace Cypress {
-    interface Chainable {
-      // Add your custom command types here
-      // Example:
-      // login(email: string, password: string): Chainable<void>
+    namespace Cypress {
+        interface Chainable {
+            /**
+             * Logs in to DemoBlaze using valid credentials
+             */
+            login(username: string, password: string): Chainable<void>
+        }
     }
-  }
 }
 
-// Example custom command (commented out - uncomment and modify as needed)
-// Cypress.Commands.add('login', (email: string, password: string) => {
-//   cy.visit('/login')
-//   cy.get('[data-cy=email]').type(email)
-//   cy.get('[data-cy=password]').type(password)
-//   cy.get('[data-cy=submit]').click()
-// })
+Cypress.Commands.add('login', (username: string, password: string) => {
+    cy.get('#login2')
+        .should('be.visible')
+        .click()
 
-export {};
+    cy.get('#logInModal')
+        .should('be.visible')
+
+    cy.get('#loginusername')
+        .should('be.visible')
+        .clear()
+        .type(username, { delay: 50 })
+        .should('have.value', username)
+
+    cy.get('#loginpassword')
+        .should('be.visible')
+        .clear()
+        .type(password, {
+            delay: 50,
+            log: false
+        })
+
+    cy.contains('#logInModal button', 'Log in')
+        .should('be.visible')
+        .and('be.enabled')
+        .click()
+
+    cy.get('#nameofuser')
+        .should('be.visible')
+        .and('contain.text', `Welcome ${username}`)
+})
+
+export {}
