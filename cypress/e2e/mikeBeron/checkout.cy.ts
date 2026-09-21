@@ -1,3 +1,75 @@
+type Customer = {
+    name: string
+    country: string
+    city: string
+    card: string
+    month: string
+    year: string
+}
+
+const productName = 'Samsung galaxy s6'
+
+const customer: Customer = {
+    name: 'Mike Beron',
+    country: 'Philippines',
+    city: 'Calamba',
+    card: '4111111111111111',
+    month: '09',
+    year: '2028'
+}
+
+const addProductToCart = (productName: string) => {
+    cy.intercept('POST', '**/addtocart').as('addToCart')
+
+    cy.contains('.hrefch', productName)
+        .should('be.visible')
+        .click()
+
+    cy.contains('a', 'Add to cart')
+        .should('be.visible')
+        .click()
+
+    // Wait until DemoBlaze finishes adding the product
+    cy.wait('@addToCart')
+        .its('response.statusCode')
+        .should('eq', 200)
+
+    cy.get('#cartur')
+        .should('be.visible')
+        .click()
+
+    // Verify the actual product appears in the cart
+    cy.contains('#tbodyid td', productName)
+        .should('be.visible')
+}
+
+const openCheckout = () => {
+    cy.contains('button', 'Place Order')
+        .should('be.visible')
+        .and('be.enabled')
+        .click()
+
+    cy.get('#orderModal')
+        .should('be.visible')
+}
+
+const fillCheckoutForm = (customer: Customer) => {
+    cy.typeSlowly('#name', customer.name)
+    cy.typeSlowly('#country', customer.country)
+    cy.typeSlowly('#city', customer.city)
+    cy.typeSlowly('#card', customer.card)
+    cy.typeSlowly('#month', customer.month)
+    cy.typeSlowly('#year', customer.year)
+}
+
+const clickPurchase = () => {
+    cy.contains('#orderModal button', 'Purchase')
+        .scrollIntoView()
+        .should('be.visible')
+        .and('be.enabled')
+        .click()
+}
+
 describe('DemoBlaze - Checkout', () => {
 
     beforeEach(() => {
@@ -11,74 +83,11 @@ describe('DemoBlaze - Checkout', () => {
     })
 
     it('should complete a purchase as a guest', () => {
-        const productName = 'Samsung galaxy s6'
+        addProductToCart(productName)
+        openCheckout()
 
-        const customer = {
-            name: 'Mike Beron',
-            country: 'Philippines',
-            city: 'Calamba',
-            card: '4111111111111111',
-            month: '09',
-            year: '2028'
-        }
-
-        cy.contains('.hrefch', productName)
-            .should('be.visible')
-            .click()
-
-        cy.on('window:alert', (message) => {
-            expect(message).to.equal('Product added')
-        })
-
-        cy.contains('a', 'Add to cart')
-            .should('be.visible')
-            .click()
-
-        cy.get('#cartur')
-            .should('be.visible')
-            .click()
-
-        cy.get('#tbodyid')
-            .should('be.visible')
-            .and('contain.text', productName)
-
-        cy.contains('button', 'Place Order')
-            .should('be.visible')
-            .and('be.enabled')
-            .click()
-
-        cy.get('#orderModal')
-            .should('be.visible')
-
-        cy.get('#name')
-            .should('be.visible')
-            .and('not.be.disabled')
-            .type(customer.name)
-
-        cy.get('#country')
-            .should('be.visible')
-            .type(customer.country)
-
-        cy.get('#city')
-            .should('be.visible')
-            .type(customer.city)
-
-        cy.get('#card')
-            .should('be.visible')
-            .type(customer.card)
-
-        cy.get('#month')
-            .should('be.visible')
-            .type(customer.month)
-
-        cy.get('#year')
-            .should('be.visible')
-            .type(customer.year)
-
-        cy.contains('#orderModal button', 'Purchase')
-            .should('be.visible')
-            .and('be.enabled')
-            .click()
+        fillCheckoutForm(customer)
+        clickPurchase()
 
         cy.get('.sweet-alert')
             .should('be.visible')
@@ -91,16 +100,6 @@ describe('DemoBlaze - Checkout', () => {
     it('should complete a purchase as an authenticated user', () => {
         const username = Cypress.env('username')
         const password = Cypress.env('password')
-        const productName = 'Samsung galaxy s6'
-
-        const customer = {
-            name: 'Mike Beron',
-            country: 'Philippines',
-            city: 'Calamba',
-            card: '4111111111111111',
-            month: '09',
-            year: '2028'
-        }
 
         expect(username, 'username environment variable')
             .to.be.a('string')
@@ -112,62 +111,11 @@ describe('DemoBlaze - Checkout', () => {
 
         cy.login(username, password)
 
-        cy.contains('.hrefch', productName)
-            .should('be.visible')
-            .click()
+        addProductToCart(productName)
+        openCheckout()
 
-        cy.on('window:alert', (message) => {
-            expect(message).to.equal('Product added')
-        })
-
-        cy.contains('a', 'Add to cart')
-            .should('be.visible')
-            .click()
-
-        cy.get('#cartur')
-            .should('be.visible')
-            .click()
-
-        cy.get('#tbodyid')
-            .should('be.visible')
-            .and('contain.text', productName)
-
-        cy.contains('button', 'Place Order')
-            .should('be.visible')
-            .and('be.enabled')
-            .click()
-
-        cy.get('#orderModal')
-            .should('be.visible')
-
-        cy.get('#name')
-            .should('be.visible')
-            .type(customer.name)
-
-        cy.get('#country')
-            .should('be.visible')
-            .type(customer.country)
-
-        cy.get('#city')
-            .should('be.visible')
-            .type(customer.city)
-
-        cy.get('#card')
-            .should('be.visible')
-            .type(customer.card)
-
-        cy.get('#month')
-            .should('be.visible')
-            .type(customer.month)
-
-        cy.get('#year')
-            .should('be.visible')
-            .type(customer.year)
-
-        cy.contains('#orderModal button', 'Purchase')
-            .should('be.visible')
-            .and('be.enabled')
-            .click()
+        fillCheckoutForm(customer)
+        clickPurchase()
 
         cy.get('.sweet-alert')
             .should('be.visible')
@@ -177,4 +125,89 @@ describe('DemoBlaze - Checkout', () => {
             })
     })
 
+    it('should prevent checkout when required fields are empty', () => {
+        addProductToCart(productName)
+        openCheckout()
+
+        cy.get('#name')
+            .should('have.value', '')
+
+        cy.get('#card')
+            .should('have.value', '')
+
+        // Intercept checkout validation alert
+        cy.window().then((win) => {
+            cy.stub(win, 'alert').as('checkoutAlert')
+        })
+
+        clickPurchase()
+
+        cy.get('@checkoutAlert')
+            .should(
+                'have.been.calledOnceWith',
+                'Please fill out Name and Creditcard.'
+            )
+
+        // Checkout modal should remain open
+        cy.get('#orderModal')
+            .should('be.visible')
+    })
+
+    it('should prevent checkout when credit card is empty', () => {
+        addProductToCart(productName)
+        openCheckout()
+
+        // Name is provided
+        cy.typeSlowly('#name', customer.name)
+
+        // Credit Card intentionally left empty
+        cy.get('#card')
+            .should('have.value', '')
+
+        // Intercept checkout validation alert
+        cy.window().then((win) => {
+            cy.stub(win, 'alert').as('checkoutAlert')
+        })
+
+        clickPurchase()
+
+        cy.get('@checkoutAlert')
+            .should(
+                'have.been.calledOnceWith',
+                'Please fill out Name and Creditcard.'
+            )
+
+        // Checkout modal should remain open
+        cy.get('#orderModal')
+            .should('be.visible')
+    })
+
+    it('should prevent checkout when name is empty', () => {
+        addProductToCart(productName)
+        openCheckout()
+
+        // Name intentionally left empty
+        cy.get('#name')
+            .should('have.value', '')
+
+        // Credit Card is provided
+        cy.typeSlowly('#card', customer.card)
+
+        // Intercept checkout validation alert
+        cy.window().then((win) => {
+            cy.stub(win, 'alert').as('checkoutAlert')
+        })
+
+        clickPurchase()
+
+        cy.get('@checkoutAlert')
+            .should(
+                'have.been.calledOnceWith',
+                'Please fill out Name and Creditcard.'
+            )
+
+        // Checkout modal should remain open
+        cy.get('#orderModal')
+            .should('be.visible')
+    })
 })

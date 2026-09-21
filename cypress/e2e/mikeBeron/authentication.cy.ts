@@ -8,9 +8,24 @@ describe('DemoBlaze - Authentication', () => {
         const username = Cypress.env('username')
         const password = Cypress.env('password')
 
-        cy.log(`Username: ${username}`)
-        cy.log(`Username length: ${username?.length}`)
-        cy.log(`Password configured: ${Boolean(password)}`)
+        expect(username, 'username environment variable')
+            .to.be.a('string')
+            .and.not.be.empty
+
+        expect(password, 'password environment variable')
+            .to.be.a('string')
+            .and.not.be.empty
+
+        cy.login(username, password)
+    })
+
+    it('should reject login with invalid credentials', () => {
+        const username = Cypress.env('username')
+        const invalidPassword = 'pw_invalid'
+
+        expect(username, 'username environment variable')
+            .to.be.a('string')
+            .and.not.be.empty
 
         cy.get('#login2')
             .should('be.visible')
@@ -19,32 +34,27 @@ describe('DemoBlaze - Authentication', () => {
         cy.get('#logInModal')
             .should('be.visible')
 
-        cy.get('#loginusername')
-            .should('be.visible')
-            .clear()
-            .type(username, { delay: 50 })
-            .should('have.value', username)
+        // Valid username + intentionally invalid password
+        cy.typeSlowly('#loginusername', username)
 
-        cy.get('#loginpassword')
-            .should('be.visible')
-            .clear()
-            .type(password, {
-                delay: 50,
-                log: false
-            })
-
-        cy.on('window:alert', (message) => {
-            cy.log(`Login alert: ${message}`)
+        cy.typeSlowly('#loginpassword', invalidPassword, {
+            log: false
         })
+
+        const alertSpy = cy.spy().as('loginAlert')
+
+        cy.on('window:alert', alertSpy)
 
         cy.contains('#logInModal button', 'Log in')
             .should('be.visible')
             .and('be.enabled')
             .click()
 
-        cy.get('#nameofuser')
-            .should('be.visible')
-            .and('contain.text', `Welcome ${username}`)
-    })
+        cy.get('@loginAlert')
+            .should('have.been.calledOnceWith', 'Wrong password.')
 
+        // Verify authentication did not succeed
+        cy.get('#nameofuser')
+            .should('not.be.visible')
+    })
 })

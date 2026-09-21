@@ -4,9 +4,9 @@
   "description": "Cypress and Playwright test automation assessment for QA engineer candidates",
   "main": "index.js",
   "scripts": {
-    "cy:open": "cypress open",
-    "cy:run": "cypress run",
-    "cy:headed": "cypress run --headed",
+    "cy:open": "cypress open --browser chrome",
+    "cy:run": "cypress run --browser chrome",
+    "cy:headed": "cypress run --browser chrome --headed",
     "pw:install": "playwright install",
     "pw:open": "playwright test --ui",
     "pw:run": "playwright test",
