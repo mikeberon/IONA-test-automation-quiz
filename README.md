@@ -63,18 +63,24 @@ cypress/
 └── support/
     ├── helpers/
     │   └── cart.ts
+    ├── pages/
+    │   ├── cartPage.ts
+    │   ├── homePage.ts
+    │   ├── loginPage.ts
+    │   └── productPage.ts
     ├── commands.ts
     └── e2e.ts
 ```
 
-Responsibilities are kept simple:
+Responsibilities are separated by purpose:
 
 - `authentication.cy.ts` - login and authentication validation
 - `checkout.cy.ts` - guest/authenticated checkout and checkout validation
 - `regression.cy.ts` - product and cart regression checks
 - `fixtures/` - reusable non-sensitive test data
-- `helpers/cart.ts` - shared add-to-cart flow
-- `commands.ts` - reusable Cypress commands
+- `pages/` - page-specific selectors, interactions, and page-state checks
+- `helpers/cart.ts` - shared add-to-cart workflow across page objects
+- `commands.ts` - reusable Cypress commands such as login and controlled input
 
 ## Test Coverage and Traceability
 
@@ -98,30 +104,30 @@ Responsibilities are kept simple:
 Run the complete suite in headless Chrome:
 
 ```bash
-npm run cy:run:chrome
+npm run cy:run
 ```
 
 Run with Chrome visible:
 
 ```bash
-npm run cy:headed:chrome
+npm run cy:headed
 ```
 
 Open Cypress:
 
 ```bash
-npm run cy:open:chrome
+npm run cy:open
 ```
 
 Run a specific spec:
 
 ```bash
-npm run cy:run:chrome -- --spec "cypress/e2e/mikeBeron/checkout.cy.ts"
+npm run cy:run -- --spec "cypress/e2e/mikeBeron/checkout.cy.ts"
 ```
 
 ## Tagged Execution
 
-Tests are tagged to support targeted execution.
+Tests are tagged using `@cypress/grep` to support targeted execution.
 
 ```bash
 npm run test:smoke
@@ -143,6 +149,21 @@ Tag usage:
 
 ## Implementation Notes
 
+### Page Object Model
+
+The suite uses a lightweight Page Object Model to separate page-specific selectors and interactions from the test scenarios.
+
+The page objects are divided by application area:
+
+- `HomePage` - homepage navigation, store validation, and product selection
+- `ProductPage` - product details and add-to-cart interaction
+- `CartPage` - cart operations and checkout interactions
+- `LoginPage` - login modal, credential entry, and authentication state
+
+Reusable workflows that span multiple pages remain separate from individual page objects. For example, the shared add-to-cart helper coordinates `HomePage`, `ProductPage`, and `CartPage`.
+
+This keeps selectors in their relevant page objects while allowing the test specs to focus on scenario flow and expected behavior.
+
 ### Test Data
 
 Reusable non-sensitive test data is separated from the test logic:
@@ -155,11 +176,11 @@ Credentials are intentionally kept out of the fixtures, and `cypress.env.json` i
 
 ### Input Handling
 
-During test execution, I observed DemoBlaze intermittently dropping characters in login and checkout input fields. For example, a complete username could be entered by Cypress but only part of the value would remain in the field.
+During test execution, I observed DemoBlaze intermittently dropping characters in login and checkout input fields. For example, a complete value could be entered by Cypress but only part of the value would remain in the field.
 
 I reproduced the issue before adding a workaround.
 
-A reusable `typeSlowly()` command now handles these inputs by entering the value one character at a time, re-querying the field between inputs, and asserting the final value.
+A reusable `typeSlowly()` command handles these inputs by entering the value one character at a time, re-querying the field between inputs, and asserting the final value.
 
 This keeps the application-specific workaround in one place and avoids adding arbitrary waits throughout the tests.
 
@@ -167,7 +188,7 @@ This keeps the application-specific workaround in one place and avoids adding ar
 
 The add-to-cart flow is shared by the checkout and regression tests and is kept in `support/helpers/cart.ts`.
 
-The helper validates the operation at three points:
+The helper coordinates the relevant page objects and validates the operation at three points:
 
 1. The native confirmation alert contains the expected `Product added` message.
 2. The `POST /addtocart` request returns HTTP 200.
@@ -183,7 +204,7 @@ cy.wait('@addToCart')
     .should('eq', 200)
 ```
 
-This provides both confirmation that the request completed successfully and a UI-level check that the expected product reached the cart.
+This provides confirmation that the request completed successfully while the final cart assertion verifies the expected UI state.
 
 ### Alert Handling
 
@@ -191,8 +212,8 @@ DemoBlaze showed inconsistent punctuation in the native add-to-cart confirmation
 
 The following variations were observed:
 
-- `Product added.` - observed during TC-03 (authenticated checkout)
-- `Product added` - observed during TC-02, TC-05, TC-06, TC-07, TC-11, and TC-12
+- `Product added.`
+- `Product added`
 
 Since both messages represent the same successful add-to-cart action, the shared cart helper accepts an optional trailing period:
 
@@ -218,11 +239,13 @@ The three additional negative scenarios are therefore covered by:
 
 ## Test Approach
 
-I kept the framework lightweight for the scope of the assessment.
+The suite uses a lightweight Page Object Model to keep page-specific selectors and interactions separate from the test scenarios.
 
-Common behavior is extracted where it is reused, while scenario-specific behavior remains in the specs. The suite uses stable selectors, explicit assertions, network synchronization where applicable, fixture-based test data, test IDs for traceability, and tags for selective execution.
+`HomePage`, `ProductPage`, `CartPage`, and `LoginPage` own the interactions for their respective areas of the application. Reusable workflows that span multiple pages, such as adding a product to the cart, remain in a shared helper rather than being tied to a single page object.
 
-I avoided adding abstraction that was not needed by the current test suite.
+The specs retain the scenario flow and expected behavior so the intent of each test remains visible.
+
+The suite also uses explicit assertions, network synchronization where applicable, fixture-based test data, test IDs for traceability, and tags for selective execution. The page objects are kept intentionally focused rather than creating abstractions for every UI component.
 
 ## Verification
 
@@ -230,11 +253,11 @@ Before finalizing the assessment, the suite was verified with:
 
 ```bash
 npx tsc --noEmit
-npm run cy:run:chrome
-npm run cy:headed:chrome
+npm run cy:run
+npm run cy:headed
 ```
 
-TypeScript compilation completed without errors, and the full Cypress suite passed in both headless and headed Chrome:
+TypeScript compilation completed without errors, and the full Cypress suite passed:
 
 ```text
 12 tests
@@ -242,4 +265,4 @@ TypeScript compilation completed without errors, and the full Cypress suite pass
 0 failing
 ```
 
-Both Cypress runs completed without manual browser interaction.
+The test suite completes without requiring manual browser interaction.
