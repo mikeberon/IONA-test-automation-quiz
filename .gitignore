@@ -6,6 +6,7 @@ yarn.lock
 cypress/videos/
 cypress/screenshots/
 cypress/downloads/
+cypress/reports/
 
 # Playwright
 playwright-report/

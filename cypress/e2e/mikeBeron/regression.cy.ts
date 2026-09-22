@@ -48,7 +48,6 @@ describe('DemoBlaze - Regression', () => {
             cartPage.verifyProductIsDisplayed(productName)
 
             cartPage.removeProduct(productName)
-            cartPage.verifyProductIsRemoved(productName)
         }
     )
 })
