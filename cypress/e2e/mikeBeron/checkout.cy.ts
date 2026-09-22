@@ -80,30 +80,28 @@ describe('DemoBlaze - Checkout', () => {
         'TC-03 - should complete checkout as an authenticated user',
         { tags: ['@smoke', '@positive', '@checkout', '@authentication'] },
         () => {
-            const username = Cypress.env('username')
-            const password = Cypress.env('password')
+            cy.env(['username', 'password'], { log: false })
+                .then(({ username, password }) => {
+                    expect(Boolean(username), 'username is configured')
+                        .to.be.true
 
-            expect(username, 'username environment variable')
-                .to.be.a('string')
-                .and.not.be.empty
+                    expect(Boolean(password), 'password is configured')
+                        .to.be.true
 
-            expect(password, 'password environment variable')
-                .to.be.a('string')
-                .and.not.be.empty
+                    cy.login(username, password)
 
-            cy.login(username, password)
+                    addProductToCart(productName)
+                    openCheckout()
 
-            addProductToCart(productName)
-            openCheckout()
+                    fillCheckoutForm(customer)
+                    clickPurchase()
 
-            fillCheckoutForm(customer)
-            clickPurchase()
-
-            cy.get('.sweet-alert')
-                .should('be.visible')
-                .within(() => {
-                    cy.get('h2')
-                        .should('have.text', 'Thank you for your purchase!')
+                    cy.get('.sweet-alert')
+                        .should('be.visible')
+                        .within(() => {
+                            cy.get('h2')
+                                .should('have.text', 'Thank you for your purchase!')
+                        })
                 })
         }
     )

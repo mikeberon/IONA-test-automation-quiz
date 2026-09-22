@@ -8,61 +8,63 @@ describe('DemoBlaze - Authentication', () => {
         'TC-09 - should log in with valid credentials',
         { tags: ['@positive', '@authentication', '@regression'] },
         () => {
-            const username = Cypress.env('username')
-            const password = Cypress.env('password')
+            cy.env(['username', 'password'], { log: false })
+                .then(({ username, password }) => {
+                    expect(Boolean(username), 'username is configured')
+                        .to.be.true
 
-            expect(username, 'username environment variable')
-                .to.be.a('string')
-                .and.not.be.empty
+                    expect(Boolean(password), 'password is configured')
+                        .to.be.true
 
-            expect(password, 'password environment variable')
-                .to.be.a('string')
-                .and.not.be.empty
-
-            cy.login(username, password)
-        })
+                    cy.login(username, password)
+                })
+        }
+    )
 
     it(
         'TC-04 - should reject login with an incorrect password',
         { tags: ['@negative', '@authentication'] },
         () => {
-            const username = Cypress.env('username')
             const invalidPassword = 'pw_invalid'
 
-            expect(username, 'username environment variable')
-                .to.be.a('string')
-                .and.not.be.empty
+            cy.env(['username'], { log: false })
+                .then(({ username }) => {
+                    expect(Boolean(username), 'username is configured')
+                        .to.be.true
 
-            cy.get('#login2')
-                .should('be.visible')
-                .click()
+                    cy.get('#login2')
+                        .should('be.visible')
+                        .click()
 
-            cy.get('#logInModal')
-                .should('be.visible')
+                    cy.get('#logInModal')
+                        .should('be.visible')
 
-            // Valid username + intentionally invalid password
-            cy.typeSlowly('#loginusername', username)
+                    cy.typeSlowly('#loginusername', username)
 
-            cy.typeSlowly('#loginpassword', invalidPassword, {
-                log: false
-            })
+                    cy.typeSlowly('#loginpassword', invalidPassword, {
+                        log: false
+                    })
 
-            const alertSpy = cy.spy().as('loginAlert')
+                    const alertSpy = cy.spy().as('loginAlert')
 
-            cy.on('window:alert', alertSpy)
+                    cy.on('window:alert', alertSpy)
 
-            cy.contains('#logInModal button', 'Log in')
-                .should('be.visible')
-                .and('be.enabled')
-                .click()
+                    cy.contains('#logInModal button', 'Log in')
+                        .should('be.visible')
+                        .and('be.enabled')
+                        .click()
 
-            cy.get('@loginAlert')
-                .should('have.been.calledOnceWith', 'Wrong password.')
+                    cy.get('@loginAlert')
+                        .should(
+                            'have.been.calledOnceWith',
+                            'Wrong password.'
+                        )
 
-            // Verify authentication did not succeed
-            cy.get('#nameofuser')
-                .should('not.be.visible')
-        })
+                    cy.get('#nameofuser')
+                        .should('not.be.visible')
+                })
+        }
+    )
 
     it(
         'TC-08 - should reject login when username and password are empty',
@@ -75,7 +77,6 @@ describe('DemoBlaze - Authentication', () => {
             cy.get('#logInModal')
                 .should('be.visible')
 
-            // Verify both fields are intentionally empty
             cy.get('#loginusername')
                 .should('be.visible')
                 .and('have.value', '')
@@ -84,9 +85,9 @@ describe('DemoBlaze - Authentication', () => {
                 .should('be.visible')
                 .and('have.value', '')
 
-            // Intercept login validation alert
             cy.window().then((win) => {
-                cy.stub(win, 'alert' as keyof typeof win).as('loginAlert')
+                cy.stub(win, 'alert' as keyof typeof win)
+                    .as('loginAlert')
             })
 
             cy.contains('#logInModal button', 'Log in')
@@ -100,8 +101,8 @@ describe('DemoBlaze - Authentication', () => {
                     'Please fill out Username and Password.'
                 )
 
-            // Verify authentication did not succeed
             cy.get('#nameofuser')
                 .should('not.be.visible')
-        })
+        }
+    )
 })
