@@ -1,5 +1,6 @@
 import customerData from '../../fixtures/customer.json'
 import productData from '../../fixtures/products.json'
+import { addProductToCart } from '../../support/helpers/cart'
 
 type Customer = {
     name: string
@@ -10,41 +11,8 @@ type Customer = {
     year: string
 }
 
-const productName = 'Samsung galaxy s6'
-
-const customer: Customer = {
-    name: 'Mike Beron',
-    country: 'Philippines',
-    city: 'Calamba',
-    card: '4111111111111111',
-    month: '09',
-    year: '2028'
-}
-
-const addProductToCart = (productName: string) => {
-    cy.intercept('POST', '**/addtocart').as('addToCart')
-
-    cy.contains('.hrefch', productName)
-        .should('be.visible')
-        .click()
-
-    cy.contains('a', 'Add to cart')
-        .should('be.visible')
-        .click()
-
-    // Wait until DemoBlaze finishes adding the product
-    cy.wait('@addToCart')
-        .its('response.statusCode')
-        .should('eq', 200)
-
-    cy.get('#cartur')
-        .should('be.visible')
-        .click()
-
-    // Verify the actual product appears in the cart
-    cy.contains('#tbodyid td', productName)
-        .should('be.visible')
-}
+const customer: Customer = customerData.validCustomer
+const productName = productData.samsungGalaxyS6.name
 
 const openCheckout = () => {
     cy.contains('button', 'Place Order')
@@ -86,7 +54,8 @@ describe('DemoBlaze - Checkout', () => {
             cy.get('#nava')
                 .should('be.visible')
                 .and('contain.text', 'PRODUCT STORE')
-        })
+        }
+    )
 
     it(
         'TC-02 - should complete checkout as a guest',
@@ -104,7 +73,8 @@ describe('DemoBlaze - Checkout', () => {
                     cy.get('h2')
                         .should('have.text', 'Thank you for your purchase!')
                 })
-        })
+        }
+    )
 
     it(
         'TC-03 - should complete checkout as an authenticated user',
@@ -135,7 +105,8 @@ describe('DemoBlaze - Checkout', () => {
                     cy.get('h2')
                         .should('have.text', 'Thank you for your purchase!')
                 })
-        })
+        }
+    )
 
     it(
         'TC-05 - should prevent checkout when required fields are empty',
@@ -150,9 +121,9 @@ describe('DemoBlaze - Checkout', () => {
             cy.get('#card')
                 .should('have.value', '')
 
-            // Intercept checkout validation alert
             cy.window().then((win) => {
-                cy.stub(win, 'alert' as keyof typeof win).as('checkoutAlert')
+                cy.stub(win, 'alert' as keyof typeof win)
+                    .as('checkoutAlert')
             })
 
             clickPurchase()
@@ -163,10 +134,10 @@ describe('DemoBlaze - Checkout', () => {
                     'Please fill out Name and Creditcard.'
                 )
 
-            // Checkout modal should remain open
             cy.get('#orderModal')
                 .should('be.visible')
-        })
+        }
+    )
 
     it(
         'TC-06 - should prevent checkout when credit card is empty',
@@ -175,16 +146,14 @@ describe('DemoBlaze - Checkout', () => {
             addProductToCart(productName)
             openCheckout()
 
-            // Name is provided
             cy.typeSlowly('#name', customer.name)
 
-            // Credit Card intentionally left empty
             cy.get('#card')
                 .should('have.value', '')
 
-            // Intercept checkout validation alert
             cy.window().then((win) => {
-                cy.stub(win, 'alert' as keyof typeof win).as('checkoutAlert')
+                cy.stub(win, 'alert' as keyof typeof win)
+                    .as('checkoutAlert')
             })
 
             clickPurchase()
@@ -195,10 +164,10 @@ describe('DemoBlaze - Checkout', () => {
                     'Please fill out Name and Creditcard.'
                 )
 
-            // Checkout modal should remain open
             cy.get('#orderModal')
                 .should('be.visible')
-        })
+        }
+    )
 
     it(
         'TC-07 - should prevent checkout when customer name is empty',
@@ -207,16 +176,14 @@ describe('DemoBlaze - Checkout', () => {
             addProductToCart(productName)
             openCheckout()
 
-            // Name intentionally left empty
             cy.get('#name')
                 .should('have.value', '')
 
-            // Credit Card is provided
             cy.typeSlowly('#card', customer.card)
 
-            // Intercept checkout validation alert
             cy.window().then((win) => {
-                cy.stub(win, 'alert' as keyof typeof win).as('checkoutAlert')
+                cy.stub(win, 'alert' as keyof typeof win)
+                    .as('checkoutAlert')
             })
 
             clickPurchase()
@@ -227,8 +194,8 @@ describe('DemoBlaze - Checkout', () => {
                     'Please fill out Name and Creditcard.'
                 )
 
-            // Checkout modal should remain open
             cy.get('#orderModal')
                 .should('be.visible')
-        })
+        }
+    )
 })

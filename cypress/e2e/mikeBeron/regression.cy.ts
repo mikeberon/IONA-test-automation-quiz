@@ -1,7 +1,10 @@
+import productData from '../../fixtures/products.json'
+import { addProductToCart } from '../../support/helpers/cart'
+
 describe('DemoBlaze - Regression', () => {
 
-    const productName = 'Samsung galaxy s6'
-    const productPrice = 360
+    const productName = productData.samsungGalaxyS6.name
+    const productPrice = productData.samsungGalaxyS6.price
 
     beforeEach(() => {
         cy.visit('/')
@@ -22,62 +25,26 @@ describe('DemoBlaze - Regression', () => {
             cy.get('.price-container')
                 .should('be.visible')
                 .and('contain.text', `$${productPrice}`)
-        })
+        }
+    )
 
     it(
         'TC-11 - should add a product to the cart and display the correct total',
         { tags: ['@regression', '@cart'] },
         () => {
-            cy.intercept('POST', '**/addtocart').as('addToCart')
-
-            cy.contains('.hrefch', productName)
-                .should('be.visible')
-                .click()
-
-            cy.contains('a', 'Add to cart')
-                .should('be.visible')
-                .click()
-
-            cy.wait('@addToCart')
-                .its('response.statusCode')
-                .should('eq', 200)
-
-            cy.get('#cartur')
-                .should('be.visible')
-                .click()
-
-            cy.contains('#tbodyid td', productName)
-                .should('be.visible')
+            addProductToCart(productName)
 
             cy.get('#totalp')
                 .should('be.visible')
                 .and('have.text', productPrice.toString())
-        })
+        }
+    )
 
     it(
         'TC-12 - should remove a product from the cart',
         { tags: ['@regression', '@cart'] },
         () => {
-            cy.intercept('POST', '**/addtocart').as('addToCart')
-
-            cy.contains('.hrefch', productName)
-                .should('be.visible')
-                .click()
-
-            cy.contains('a', 'Add to cart')
-                .should('be.visible')
-                .click()
-
-            cy.wait('@addToCart')
-                .its('response.statusCode')
-                .should('eq', 200)
-
-            cy.get('#cartur')
-                .should('be.visible')
-                .click()
-
-            cy.contains('#tbodyid td', productName)
-                .should('be.visible')
+            addProductToCart(productName)
 
             cy.contains('#tbodyid tr', productName)
                 .within(() => {
@@ -88,5 +55,6 @@ describe('DemoBlaze - Regression', () => {
 
             cy.contains('#tbodyid td', productName)
                 .should('not.exist')
-        })
+        }
+    )
 })
