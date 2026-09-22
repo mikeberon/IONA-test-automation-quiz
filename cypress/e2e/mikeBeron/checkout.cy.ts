@@ -25,23 +25,40 @@ describe('DemoBlaze - Checkout', () => {
 
     it(
         'TC-02 - should complete checkout as an authenticated user',
-        { tags: ['@tc2', '@smoke', '@positive', '@checkout', '@authentication'] },
+        {
+            tags: [
+                '@tc2',
+                '@smoke',
+                '@positive',
+                '@checkout',
+                '@authentication'
+            ]
+        },
         () => {
             cy.env(['username', 'password'], { log: false })
                 .then(({ username, password }) => {
-                    expect(Boolean(username), 'username is configured')
-                        .to.be.true
+                    expect(
+                        Boolean(username),
+                        'username is configured'
+                    ).to.be.true
 
-                    expect(Boolean(password), 'password is configured')
-                        .to.be.true
+                    expect(
+                        Boolean(password),
+                        'password is configured'
+                    ).to.be.true
 
                     cy.login(username, password)
 
-                    // Ensure the authenticated user starts with a clean cart.
+                    // DemoBlaze persists cart state for authenticated users.
+                    // Establish a known empty-cart state before checkout.
                     cartPage.clearCart()
+
                     homePage.open()
 
                     addProductToCart(productName)
+
+                    cartPage.open()
+                    cartPage.verifyProductIsDisplayed(productName)
                     cartPage.openCheckout()
 
                     cartPage.fillCheckoutForm(customer)
@@ -56,10 +73,10 @@ describe('DemoBlaze - Checkout', () => {
         'TC-03 - should complete checkout as a guest',
         { tags: ['@smoke', '@positive', '@checkout'] },
         () => {
-            cartPage.clearCart()
-            homePage.open()
-
             addProductToCart(productName)
+
+            cartPage.open()
+            cartPage.verifyProductIsDisplayed(productName)
             cartPage.openCheckout()
 
             cartPage.fillCheckoutForm(customer)
@@ -73,10 +90,10 @@ describe('DemoBlaze - Checkout', () => {
         'TC-05 - should prevent checkout when required fields are empty',
         { tags: ['@negative', '@checkout'] },
         () => {
-            cartPage.clearCart()
-            homePage.open()
-
             addProductToCart(productName)
+
+            cartPage.open()
+            cartPage.verifyProductIsDisplayed(productName)
             cartPage.openCheckout()
 
             cartPage.verifyNameIsEmpty()
@@ -106,10 +123,10 @@ describe('DemoBlaze - Checkout', () => {
         'TC-06 - should prevent checkout when credit card is empty',
         { tags: ['@negative', '@checkout'] },
         () => {
-            cartPage.clearCart()
-            homePage.open()
-
             addProductToCart(productName)
+
+            cartPage.open()
+            cartPage.verifyProductIsDisplayed(productName)
             cartPage.openCheckout()
 
             cartPage.enterName(customer.name)
@@ -137,12 +154,12 @@ describe('DemoBlaze - Checkout', () => {
 
     it(
         'TC-07 - should prevent checkout when customer name is empty',
-        { tags: ['@negative', '@checkout', '@tc7'] },
+        { tags: ['@negative', '@checkout'] },
         () => {
-            cartPage.clearCart()
-            homePage.open()
-
             addProductToCart(productName)
+
+            cartPage.open()
+            cartPage.verifyProductIsDisplayed(productName)
             cartPage.openCheckout()
 
             cartPage.verifyNameIsEmpty()

@@ -32,6 +32,8 @@ describe('DemoBlaze - Regression', () => {
         () => {
             addProductToCart(productName)
 
+            cartPage.open()
+            cartPage.verifyProductIsDisplayed(productName)
             cartPage.verifyTotal(productPrice)
         }
     )
@@ -41,6 +43,9 @@ describe('DemoBlaze - Regression', () => {
         { tags: ['@regression', '@cart'] },
         () => {
             addProductToCart(productName)
+
+            cartPage.open()
+            cartPage.verifyProductIsDisplayed(productName)
 
             cartPage.removeProduct(productName)
             cartPage.verifyProductIsRemoved(productName)

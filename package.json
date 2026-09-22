@@ -31,6 +31,7 @@
     "@playwright/test": "^1.53.0",
     "@types/node": "^22.10.2",
     "cypress": "^15.9.0",
+    "cypress-mochawesome-reporter": "^5.0.0",
     "typescript": "^5.9.3"
   },
   "engines": {
