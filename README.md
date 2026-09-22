@@ -1,196 +1,193 @@
-# Test Automation Assessment
+# Mike Beron - Cypress Test Automation Assessment
 
-Welcome to IONA! This repository is used to assess QA engineer candidates on their test automation skills. You may use either **Cypress** or **Playwright** — choose the framework you are most comfortable with. This is your time to shine, so make sure you are proud of what you submit before opening a pull request.
+This implementation contains automated end-to-end tests for the DemoBlaze application using **Cypress** and **TypeScript**.
+
+The test suite covers authentication, guest and authenticated checkout flows, negative validation scenarios, and regression coverage for core product and cart functionality.
 
 ## Prerequisites
 
-Before you begin, make sure you have the following installed:
+Ensure the following are installed:
 
-- **Node.js**: Version 24.x LTS or higher (latest: 24.13.0)
-  - Download from [nodejs.org](https://nodejs.org/)
-  - Verify installation: `node --version`
-- **npm**: Comes with Node.js (version 10.0.0 or higher)
-  - Verify installation: `npm --version`
-- **Git**: For version control
-  - Verify installation: `git --version`
-- **Basic understanding of TypeScript**: Optional, but helpful for better IDE support and type safety
+- Node.js 24.x LTS or later
+- npm 10+
+- Google Chrome
+- Git
 
-## Acceptance Criteria
+Verify your installation:
 
-The following test scenarios are **required**. Your tests must cover all three flows against the [DemoBlaze](https://www.demoblaze.com/) website.
-
-### 1. Checkout Flow — Guest
-
-Automate the full purchase journey without being logged in:
-
-- Navigate to the homepage
-- Select a product from any category
-- Add the product to the cart
-- Proceed to checkout and fill in the purchase form (name, country, city, credit card, month, year)
-- Assert that the order success confirmation appears
-
-### 2. Checkout Flow — Logged In User
-
-Automate the full purchase journey as an authenticated user:
-
-- Log in with valid credentials
-- Select a product and add it to the cart
-- Proceed to checkout and complete the purchase form
-- Assert that the order success confirmation appears
-
-### 3. Negative / Invalid Test Cases
-
-Automate scenarios that verify the application handles bad input gracefully. At minimum, cover:
-
-- **Invalid login**: Attempt to log in with incorrect credentials and assert the error alert message
-- **Empty checkout form**: Proceed to checkout without filling in any fields and assert that the expected validation or browser behavior is triggered
-- At least **three additional** negative scenarios of your choice (e.g., adding no items before checkout, using an invalid card number format, etc.)
-
----
-
-# Getting Started
-
-### 1. Fork the Repository
-Click the **Fork** button at the top right of this page to create your own copy of the repo under your GitHub account.
-
-### 2. Clone Your Fork
 ```bash
-git clone https://github.com/your-github-username/IONA-test-automation-quiz.git
-cd cypress-test-automation-quiz
+node --version
+npm --version
+git --version
 ```
 
-### 3. Install Dependencies
+## Setup
+
+Clone the repository and install the project dependencies:
+
 ```bash
+git clone https://github.com/mikeberon/IONA-test-automation-quiz.git
+cd IONA-test-automation-quiz
 npm install
 ```
 
-### 4. Create Your Branch
-**Important**: Always work on your own branch. Use DD-MM-YYYY format for the date.
-```bash
-git checkout -b your-name/date-of-sumbission
-```
-**Branch Naming Convention**: Use your name followed by a brief description, for example:
-- `john-doe/08-25-2026`
+## Environment Variables
 
-### 5. Submit Your Work
-Once done, push your branch to your fork and open a **Pull Request** targeting the original `CodersForHire/IONA-test-automation-quiz` repository.
+Authentication tests use environment-specific credentials rather than storing credentials directly in the test code.
 
----
+Create the following file in the project root:
 
-## Cypress
-
-### Folder Structure
-
-Create your own folder under `cypress/e2e/` using camelCase with your first and last name:
-
-```
-cypress/
-  └── e2e/
-      └── johnDoe/
-          └── checkout.cy.ts
+```text
+cypress.env.json
 ```
 
-### Running Cypress
+Add the test credentials:
 
-| Command | Description |
-|---|---|
-| `npm run cy:open` | Open the interactive Cypress Test Runner |
-| `npm run cy:run` | Run all tests headlessly |
-| `npm run cy:headed` | Run tests with the browser visible |
-
----
-
-## Playwright
-
-### Setup
-
-After installing dependencies, install the Playwright browser binaries:
-
-```bash
-npm run pw:install
+```json
+{
+  "username": "<username>",
+  "password": "<password>"
+}
 ```
 
-### Folder Structure
+`cypress.env.json` is excluded through `.gitignore` and should not be committed to source control.
 
-Create your own folder under `playwright/` using camelCase with your first and last name:
+For a CI/CD environment, credentials should be supplied through the platform's secret-management mechanism rather than committed configuration files.
 
+## Test Structure
+
+Candidate tests are located under:
+
+```text
+cypress/e2e/mikeBeron/
+├── authentication.cy.ts
+├── checkout.cy.ts
+└── regression.cy.ts
 ```
-playwright/
-  └── johnDoe/
-      └── checkout.spec.ts
+
+Reusable Cypress commands are defined in:
+
+```text
+cypress/support/commands.ts
 ```
 
-### Running Playwright
+### Test Responsibilities
 
-| Command | Description |
-|---|---|
-| `npm run pw:open` | Open the interactive Playwright UI mode |
-| `npm run pw:run` | Run all tests headlessly |
-| `npm run pw:headed` | Run tests with the browser visible |
+**authentication.cy.ts**
+- Valid user login
+- Invalid credential validation
+- Empty username/password validation
 
----
+**checkout.cy.ts**
+- Homepage verification
+- Guest checkout
+- Authenticated checkout
+- Empty required checkout fields
+- Missing credit card validation
+- Missing customer name validation
 
-## Test Website
+**regression.cy.ts**
+- Product details verification
+- Add product to cart and verify total
+- Remove product from cart
 
-This assessment uses **[DemoBlaze](https://www.demoblaze.com/)** as the target application.
+## Running the Tests
 
-DemoBlaze is a demo e-commerce website that includes:
+### Headless Chrome
 
-- **Product Catalog**: Phones, Laptops, and Monitors
-- **Shopping Cart**: Add and remove products
-- **User Authentication**: Sign up and login
-- **Checkout**: Purchase form with order confirmation
-
----
-
-## Committing and Pushing
+Run the complete suite:
 
 ```bash
-# Stage your changes
-git add .
-
-# Commit with a descriptive message
-git commit -m "Add checkout flow tests."
-
-# Push your branch
-git push origin your-branch-name
+npm run cy:run:chrome
 ```
 
-**Commit Message Best Practices**:
-- Use clear, descriptive messages
-- Start with a verb: Add, Fix, Update, Remove
-- Keep messages concise but informative
+### Headed Chrome
 
----
+Run the complete suite with the browser visible:
 
-## Project Structure
-
-```
-cypress-test-automation-quiz/
-├── README.md
-├── package.json
-├── tsconfig.json                    # TypeScript config for Cypress
-├── cypress.config.ts                # Cypress configuration
-├── playwright.config.ts             # Playwright configuration
-├── cypress/
-│   ├── e2e/
-│   │   └── [yourName]/              # Your Cypress test folder
-│   │       └── checkout.cy.ts
-│   ├── fixtures/
-│   │   └── example.json
-│   └── support/
-│       ├── commands.ts
-│       └── e2e.ts
-├── playwright/
-│   ├── tsconfig.json                # TypeScript config for Playwright
-│   └── [yourName]/                  # Your Playwright test folder
-│       └── checkout.spec.ts
-└── .github/
-    └── workflows/
-        ├── cypress-tests.yml
-        └── playwright-tests.yml
+```bash
+npm run cy:headed:chrome
 ```
 
----
+### Run a Specific Spec
 
-Happy Testing!
+Example:
+
+```bash
+npm run cy:run:chrome -- --spec "cypress/e2e/mikeBeron/checkout.cy.ts"
+```
+
+## Test Coverage
+
+The suite covers the primary DemoBlaze purchase journey and supporting validation scenarios:
+
+- Homepage availability
+- Product selection
+- Product details
+- Add-to-cart functionality
+- Cart contents and total
+- Product removal
+- Valid authentication
+- Invalid authentication
+- Required login-field validation
+- Guest checkout
+- Authenticated checkout
+- Required checkout-field validation
+- Successful purchase confirmation
+
+## Stability and Test Design
+
+### Application-Aware Input Handling
+
+During test execution, DemoBlaze intermittently dropped characters while Cypress entered values into some input fields.
+
+A reusable `typeSlowly()` Cypress command was introduced to provide reliable input interaction and verify the resulting field value.
+
+This avoids duplicating application-specific typing logic throughout the test suite.
+
+### Add-to-Cart Synchronization
+
+Adding a product to the cart performs an asynchronous request.
+
+The tests intercept the Add-to-Cart request and wait for its successful completion before navigating to the cart:
+
+```typescript
+cy.intercept('POST', '**/addtocart').as('addToCart')
+
+cy.wait('@addToCart')
+    .its('response.statusCode')
+    .should('eq', 200)
+```
+
+This provides deterministic synchronization rather than relying on arbitrary fixed waits such as `cy.wait(2000)`.
+
+### Native Alert Handling
+
+DemoBlaze displays a native `Product added` alert after adding an item.
+
+The tests register the alert handler before triggering the action and verify the expected message, allowing execution to continue reliably in both headed and headless Chrome.
+
+### Business-Level Assertions
+
+Tests verify the resulting application state in addition to individual UI actions. Examples include:
+
+- Confirming the selected product appears in the cart
+- Verifying the cart total
+- Confirming a deleted product no longer exists
+- Verifying the successful purchase confirmation
+- Confirming authentication did not succeed after invalid credentials
+
+### Secrets Management
+
+Credentials are not hard-coded in the automation suite.
+
+Local execution uses an ignored `cypress.env.json` file, while a production CI/CD implementation should obtain credentials from the CI/CD platform's protected secret store.
+
+## Execution Verification
+
+The complete assessment suite was verified successfully in:
+
+- Chrome - Headless
+- Chrome - Headed
+
+Both execution modes completed without manual browser interaction.

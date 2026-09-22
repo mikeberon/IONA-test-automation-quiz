@@ -7,7 +7,7 @@ describe('DemoBlaze - Regression', () => {
         cy.visit('/')
     })
 
-    it('should display the correct product details', () => {
+    it('TC-10 - should display the correct product details', () => {
         cy.contains('.hrefch', productName)
             .should('be.visible')
             .click()
@@ -21,7 +21,7 @@ describe('DemoBlaze - Regression', () => {
             .and('contain.text', `$${productPrice}`)
     })
 
-    it('should add a product to the cart and display the correct total', () => {
+    it('TC-11 - should add a product to the cart and display the correct total', () => {
         cy.intercept('POST', '**/addtocart').as('addToCart')
 
         cy.contains('.hrefch', productName)
@@ -48,7 +48,7 @@ describe('DemoBlaze - Regression', () => {
             .and('have.text', productPrice.toString())
     })
 
-    it('should remove a product from the cart', () => {
+    it('TC-12 - should remove a product from the cart', () => {
         cy.intercept('POST', '**/addtocart').as('addToCart')
 
         cy.contains('.hrefch', productName)

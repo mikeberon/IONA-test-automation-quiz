@@ -4,7 +4,7 @@ describe('DemoBlaze - Authentication', () => {
         cy.visit('/')
     })
 
-    it('should log in with valid credentials', () => {
+    it('TC-09 - should log in with valid credentials', () => {
         const username = Cypress.env('username')
         const password = Cypress.env('password')
 
@@ -19,7 +19,7 @@ describe('DemoBlaze - Authentication', () => {
         cy.login(username, password)
     })
 
-    it('should reject login with invalid credentials', () => {
+    it('TC-04 - should reject login with an incorrect password', () => {
         const username = Cypress.env('username')
         const invalidPassword = 'pw_invalid'
 
@@ -58,7 +58,7 @@ describe('DemoBlaze - Authentication', () => {
             .should('not.be.visible')
     })
 
-    it('should reject login when username and password are empty', () => {
+    it('TC-08 - should reject login when username and password are empty', () => {
         cy.get('#login2')
             .should('be.visible')
             .click()
@@ -77,7 +77,7 @@ describe('DemoBlaze - Authentication', () => {
 
         // Intercept login validation alert
         cy.window().then((win) => {
-            cy.stub(win, 'alert').as('loginAlert')
+            cy.stub(win, 'alert' as keyof typeof win).as('loginAlert')
         })
 
         cy.contains('#logInModal button', 'Log in')

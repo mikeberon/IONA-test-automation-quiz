@@ -1,3 +1,6 @@
+import customerData from '../../fixtures/customer.json'
+import productData from '../../fixtures/products.json'
+
 type Customer = {
     name: string
     country: string
@@ -76,13 +79,13 @@ describe('DemoBlaze - Checkout', () => {
         cy.visit('/')
     })
 
-    it('should display the homepage', () => {
+    it('TC-01 - should display the homepage', () => {
         cy.get('#nava')
             .should('be.visible')
             .and('contain.text', 'PRODUCT STORE')
     })
 
-    it('should complete a purchase as a guest', () => {
+    it('TC-02 - should complete checkout as a guest', () => {
         addProductToCart(productName)
         openCheckout()
 
@@ -97,7 +100,7 @@ describe('DemoBlaze - Checkout', () => {
             })
     })
 
-    it('should complete a purchase as an authenticated user', () => {
+    it('TC-03 - should complete a purchase as an authenticated user', () => {
         const username = Cypress.env('username')
         const password = Cypress.env('password')
 
@@ -125,7 +128,7 @@ describe('DemoBlaze - Checkout', () => {
             })
     })
 
-    it('should prevent checkout when required fields are empty', () => {
+    it('TC-05 - should prevent checkout when required fields are empty', () => {
         addProductToCart(productName)
         openCheckout()
 
@@ -137,7 +140,7 @@ describe('DemoBlaze - Checkout', () => {
 
         // Intercept checkout validation alert
         cy.window().then((win) => {
-            cy.stub(win, 'alert').as('checkoutAlert')
+            cy.stub(win, 'alert' as keyof typeof win).as('checkoutAlert')
         })
 
         clickPurchase()
@@ -153,7 +156,7 @@ describe('DemoBlaze - Checkout', () => {
             .should('be.visible')
     })
 
-    it('should prevent checkout when credit card is empty', () => {
+    it('TC-06 - should prevent checkout when credit card is empty', () => {
         addProductToCart(productName)
         openCheckout()
 
@@ -166,7 +169,7 @@ describe('DemoBlaze - Checkout', () => {
 
         // Intercept checkout validation alert
         cy.window().then((win) => {
-            cy.stub(win, 'alert').as('checkoutAlert')
+            cy.stub(win, 'alert' as keyof typeof win).as('checkoutAlert')
         })
 
         clickPurchase()
@@ -182,7 +185,7 @@ describe('DemoBlaze - Checkout', () => {
             .should('be.visible')
     })
 
-    it('should prevent checkout when name is empty', () => {
+    it('TC-07 - should prevent checkout when name is empty', () => {
         addProductToCart(productName)
         openCheckout()
 
@@ -195,7 +198,7 @@ describe('DemoBlaze - Checkout', () => {
 
         // Intercept checkout validation alert
         cy.window().then((win) => {
-            cy.stub(win, 'alert').as('checkoutAlert')
+            cy.stub(win, 'alert' as keyof typeof win).as('checkoutAlert')
         })
 
         clickPurchase()
