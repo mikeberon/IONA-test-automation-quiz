@@ -1,19 +1,17 @@
 # Mike Beron - Cypress Test Automation Assessment
 
-This implementation contains automated end-to-end tests for the DemoBlaze application using **Cypress** and **TypeScript**.
+End-to-end test automation for the DemoBlaze e-commerce application using **Cypress** and **TypeScript**.
 
-The test suite covers authentication, guest and authenticated checkout flows, negative validation scenarios, and regression coverage for core product and cart functionality.
+The suite covers the required guest and authenticated purchase flows, negative scenarios, and regression checks for authentication, product, and cart functionality.
 
 ## Prerequisites
-
-Ensure the following are installed:
 
 - Node.js 24.x LTS or later
 - npm 10+
 - Google Chrome
 - Git
 
-Verify your installation:
+Verify the local environment:
 
 ```bash
 node --version
@@ -23,7 +21,7 @@ git --version
 
 ## Setup
 
-Clone the repository and install the project dependencies:
+Clone the repository and install dependencies:
 
 ```bash
 git clone https://github.com/mikeberon/IONA-test-automation-quiz.git
@@ -31,17 +29,11 @@ cd IONA-test-automation-quiz
 npm install
 ```
 
-## Environment Variables
+## Test Credentials
 
-Authentication tests use environment-specific credentials rather than storing credentials directly in the test code.
+Authentication credentials are kept outside the test code and fixtures.
 
-Create the following file in the project root:
-
-```text
-cypress.env.json
-```
-
-Add the test credentials:
+Create `cypress.env.json` in the project root:
 
 ```json
 {
@@ -50,106 +42,138 @@ Add the test credentials:
 }
 ```
 
-`cypress.env.json` is excluded through `.gitignore` and should not be committed to source control.
+`cypress.env.json` is excluded through `.gitignore` and should not be committed.
 
-For a CI/CD environment, credentials should be supplied through the platform's secret-management mechanism rather than committed configuration files.
+Authentication tests retrieve only the credentials they need through `cy.env()`. Sensitive values are requested with Cypress logging disabled, and the deprecated `Cypress.env()` API is disabled in the Cypress configuration.
 
-## Test Structure
+For CI/CD, credentials should be provided through the CI platform's secret store rather than committed configuration files.
 
-Candidate tests are located under:
-
-```text
-cypress/e2e/mikeBeron/
-├── authentication.cy.ts
-├── checkout.cy.ts
-└── regression.cy.ts
-```
-
-Reusable Cypress commands are defined in:
+## Project Structure
 
 ```text
-cypress/support/commands.ts
+cypress/
+├── e2e/
+│   └── mikeBeron/
+│       ├── authentication.cy.ts
+│       ├── checkout.cy.ts
+│       └── regression.cy.ts
+├── fixtures/
+│   ├── customer.json
+│   └── products.json
+└── support/
+    ├── helpers/
+    │   └── cart.ts
+    ├── commands.ts
+    └── e2e.ts
 ```
 
-### Test Responsibilities
+Responsibilities are kept simple:
 
-**authentication.cy.ts**
-- Valid user login
-- Invalid credential validation
-- Empty username/password validation
+- `authentication.cy.ts` - login and authentication validation
+- `checkout.cy.ts` - guest/authenticated checkout and checkout validation
+- `regression.cy.ts` - product and cart regression checks
+- `fixtures/` - reusable non-sensitive test data
+- `helpers/cart.ts` - shared add-to-cart flow
+- `commands.ts` - reusable Cypress commands
 
-**checkout.cy.ts**
-- Homepage verification
-- Guest checkout
-- Authenticated checkout
-- Empty required checkout fields
-- Missing credit card validation
-- Missing customer name validation
+## Test Coverage and Traceability
 
-**regression.cy.ts**
-- Product details verification
-- Add product to cart and verify total
-- Remove product from cart
+| Requirement | TC | Automated Test |
+|---|---|---|
+| Guest purchase journey | TC-02 | Complete checkout as a guest |
+| Authenticated purchase journey | TC-03 | Complete checkout as an authenticated user |
+| Invalid login | TC-04 | Reject login with an incorrect password |
+| Empty checkout form | TC-05 | Prevent checkout when required fields are empty |
+| Additional negative scenario | TC-06 | Prevent checkout when credit card is empty |
+| Additional negative scenario | TC-07 | Prevent checkout when customer name is empty |
+| Additional negative scenario | TC-08 | Reject login when username and password are empty |
+| Regression | TC-01 | Display the homepage |
+| Regression | TC-09 | Log in with valid credentials |
+| Regression | TC-10 | Display the correct product details |
+| Regression | TC-11 | Add a product to the cart and verify the total |
+| Regression | TC-12 | Remove a product from the cart |
 
 ## Running the Tests
 
-### Headless Chrome
-
-Run the complete suite:
+Run the complete suite in headless Chrome:
 
 ```bash
 npm run cy:run:chrome
 ```
 
-### Headed Chrome
-
-Run the complete suite with the browser visible:
+Run with Chrome visible:
 
 ```bash
 npm run cy:headed:chrome
 ```
 
-### Run a Specific Spec
+Open Cypress:
 
-Example:
+```bash
+npm run cy:open:chrome
+```
+
+Run a specific spec:
 
 ```bash
 npm run cy:run:chrome -- --spec "cypress/e2e/mikeBeron/checkout.cy.ts"
 ```
 
-## Test Coverage
+## Tagged Execution
 
-The suite covers the primary DemoBlaze purchase journey and supporting validation scenarios:
+Tests are tagged to support targeted execution.
 
-- Homepage availability
-- Product selection
-- Product details
-- Add-to-cart functionality
-- Cart contents and total
-- Product removal
-- Valid authentication
-- Invalid authentication
-- Required login-field validation
-- Guest checkout
-- Authenticated checkout
-- Required checkout-field validation
-- Successful purchase confirmation
+```bash
+npm run test:smoke
+npm run test:regression
+npm run test:negative
+npm run test:checkout
+npm run test:authentication
+```
 
-## Stability and Test Design
+Tag usage:
 
-### Application-Aware Input Handling
+- `@smoke` - TC-01, TC-02, TC-03
+- `@regression` - TC-01, TC-09, TC-10, TC-11, TC-12
+- `@negative` - TC-04, TC-05, TC-06, TC-07, TC-08
+- `@positive` - TC-02, TC-03, TC-09
+- `@authentication` - TC-03, TC-04, TC-08, TC-09
+- `@checkout` - TC-02, TC-03, TC-05, TC-06, TC-07
+- `@cart` - TC-11, TC-12
 
-During test execution, DemoBlaze intermittently dropped characters while Cypress entered values into some input fields.
+## Implementation Notes
 
-A reusable `typeSlowly()` Cypress command was introduced to provide reliable input interaction and verify the resulting field value.
+### Test Data
 
-This avoids duplicating application-specific typing logic throughout the test suite.
+Reusable non-sensitive test data is separated from the test logic:
 
-### Add-to-Cart Synchronization
+- `fixtures/customer.json` - checkout customer details
+- `fixtures/products.json` - product name and expected price
+- `cypress.env.json` - local authentication credentials
 
-Adding a product to the cart performs an asynchronous request.
+Credentials are intentionally kept out of the fixtures, and `cypress.env.json` is ignored by Git.
 
-The tests intercept the Add-to-Cart request and wait for its successful completion before navigating to the cart:
+### Input Handling
+
+During test execution, I observed DemoBlaze intermittently dropping characters in login and checkout input fields. For example, a complete username could be entered by Cypress but only part of the value would remain in the field.
+
+I reproduced the issue before adding a workaround.
+
+A reusable `typeSlowly()` command now handles these inputs by entering the value one character at a time, re-querying the field between inputs, and asserting the final value.
+
+This keeps the application-specific workaround in one place and avoids adding arbitrary waits throughout the tests.
+
+### Add-to-Cart Flow
+
+The add-to-cart flow is shared by the checkout and regression tests and is kept in `support/helpers/cart.ts`.
+
+The helper validates the operation at three points:
+
+1. The native confirmation alert contains the expected `Product added` message.
+2. The `POST /addtocart` request returns HTTP 200.
+3. The selected product is present in the cart.
+
+The network request is used for synchronization instead of a fixed wait:
 
 ```typescript
 cy.intercept('POST', '**/addtocart').as('addToCart')
@@ -159,35 +183,63 @@ cy.wait('@addToCart')
     .should('eq', 200)
 ```
 
-This provides deterministic synchronization rather than relying on arbitrary fixed waits such as `cy.wait(2000)`.
+This provides both confirmation that the request completed successfully and a UI-level check that the expected product reached the cart.
 
-### Native Alert Handling
+### Alert Handling
 
-DemoBlaze displays a native `Product added` alert after adding an item.
+DemoBlaze showed inconsistent punctuation in the native add-to-cart confirmation during test execution.
 
-The tests register the alert handler before triggering the action and verify the expected message, allowing execution to continue reliably in both headed and headless Chrome.
+The following variations were observed:
 
-### Business-Level Assertions
+- `Product added.` - observed during TC-03 (authenticated checkout)
+- `Product added` - observed during TC-02, TC-05, TC-06, TC-07, TC-11, and TC-12
 
-Tests verify the resulting application state in addition to individual UI actions. Examples include:
+Since both messages represent the same successful add-to-cart action, the shared cart helper accepts an optional trailing period:
 
-- Confirming the selected product appears in the cart
-- Verifying the cart total
-- Confirming a deleted product no longer exists
-- Verifying the successful purchase confirmation
-- Confirming authentication did not succeed after invalid credentials
+```typescript
+expect(message.trim()).to.match(/^Product added\.?$/)
+```
 
-### Secrets Management
+The alert is not used as the only success condition. The helper also checks the `/addtocart` response and verifies that the expected product is present in the cart.
 
-Credentials are not hard-coded in the automation suite.
+### Empty-Cart Behavior
 
-Local execution uses an ignored `cypress.env.json` file, while a production CI/CD implementation should obtain credentials from the CI/CD platform's protected secret store.
+The assessment lists checkout with no items in the cart as an example of an additional negative scenario.
 
-## Execution Verification
+I tested this behavior manually and found that DemoBlaze currently allows the checkout/purchase flow to continue with an empty cart.
 
-The complete assessment suite was verified successfully in:
+I did not automate a test expecting the application to reject the flow because that assertion would not match the application's current behavior.
 
-- Chrome - Headless
-- Chrome - Headed
+The three additional negative scenarios are therefore covered by:
 
-Both execution modes completed without manual browser interaction.
+- TC-06 - checkout without a credit card
+- TC-07 - checkout without a customer name
+- TC-08 - login with both username and password empty
+
+## Test Approach
+
+I kept the framework lightweight for the scope of the assessment.
+
+Common behavior is extracted where it is reused, while scenario-specific behavior remains in the specs. The suite uses stable selectors, explicit assertions, network synchronization where applicable, fixture-based test data, test IDs for traceability, and tags for selective execution.
+
+I avoided adding abstraction that was not needed by the current test suite.
+
+## Verification
+
+Before finalizing the assessment, the suite was verified with:
+
+```bash
+npx tsc --noEmit
+npm run cy:run:chrome
+npm run cy:headed:chrome
+```
+
+TypeScript compilation completed without errors, and the full Cypress suite passed in both headless and headed Chrome:
+
+```text
+12 tests
+12 passing
+0 failing
+```
+
+Both Cypress runs completed without manual browser interaction.
