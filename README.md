@@ -79,15 +79,15 @@ Responsibilities are separated by purpose:
 - `regression.cy.ts` - product and cart regression checks
 - `fixtures/` - reusable non-sensitive test data
 - `pages/` - page-specific selectors, interactions, and page-state checks
-- `helpers/cart.ts` - shared add-to-cart workflow across page objects
+- `helpers/cart.ts` - shared add-to-cart workflow
 - `commands.ts` - reusable Cypress commands such as login and controlled input
 
 ## Test Coverage and Traceability
 
 | Requirement | TC | Automated Test |
 |---|---|---|
-| Guest purchase journey | TC-02 | Complete checkout as a guest |
-| Authenticated purchase journey | TC-03 | Complete checkout as an authenticated user |
+| Authenticated purchase journey | TC-02 | Complete checkout as an authenticated user |
+| Guest purchase journey | TC-03 | Complete checkout as a guest |
 | Invalid login | TC-04 | Reject login with an incorrect password |
 | Empty checkout form | TC-05 | Prevent checkout when required fields are empty |
 | Additional negative scenario | TC-06 | Prevent checkout when credit card is empty |
@@ -143,9 +143,36 @@ Tag usage:
 - `@regression` - TC-01, TC-09, TC-10, TC-11, TC-12
 - `@negative` - TC-04, TC-05, TC-06, TC-07, TC-08
 - `@positive` - TC-02, TC-03, TC-09
-- `@authentication` - TC-03, TC-04, TC-08, TC-09
+- `@authentication` - TC-02, TC-04, TC-08, TC-09
 - `@checkout` - TC-02, TC-03, TC-05, TC-06, TC-07
 - `@cart` - TC-11, TC-12
+
+## Reporting
+
+The suite uses `cypress-mochawesome-reporter` to generate an HTML test report.
+
+Reporting includes:
+
+- Test and suite results
+- Execution duration
+- Pass/fail status
+- Charts and summary information
+- Failure details
+- Embedded screenshots for failed tests
+
+Cypress is configured with:
+
+```typescript
+screenshotOnRunFailure: true
+```
+
+Screenshots are captured automatically when a test fails. Passing tests do not generate screenshots to avoid unnecessary report artifacts.
+
+Video recording is disabled for this assessment.
+
+After a test run, the generated Mochawesome report can be found under the Cypress reports directory.
+
+Generated reports, screenshots, and videos are runtime artifacts and should not be committed to source control.
 
 ## Implementation Notes
 
@@ -160,9 +187,9 @@ The page objects are divided by application area:
 - `CartPage` - cart operations and checkout interactions
 - `LoginPage` - login modal, credential entry, and authentication state
 
-Reusable workflows that span multiple pages remain separate from individual page objects. For example, the shared add-to-cart helper coordinates `HomePage`, `ProductPage`, and `CartPage`.
+Reusable workflows that span application areas remain separate from individual page objects. For example, the shared add-to-cart helper coordinates product selection and the add-to-cart operation.
 
-This keeps selectors in their relevant page objects while allowing the test specs to focus on scenario flow and expected behavior.
+The test specs retain scenario flow and scenario-specific expectations so the purpose of each test remains visible.
 
 ### Test Data
 
@@ -172,27 +199,26 @@ Reusable non-sensitive test data is separated from the test logic:
 - `fixtures/products.json` - product name and expected price
 - `cypress.env.json` - local authentication credentials
 
-Credentials are intentionally kept out of the fixtures, and `cypress.env.json` is ignored by Git.
+Credentials are intentionally kept out of fixtures, and `cypress.env.json` is ignored by Git.
 
 ### Input Handling
 
-During test execution, I observed DemoBlaze intermittently dropping characters in login and checkout input fields. For example, a complete value could be entered by Cypress but only part of the value would remain in the field.
+During test execution, DemoBlaze intermittently dropped characters in login and checkout input fields. For example, a complete value could be entered by Cypress but only part of the value would remain in the field.
 
-I reproduced the issue before adding a workaround.
+The behavior was reproduced before adding a targeted workaround.
 
 A reusable `typeSlowly()` command handles these inputs by entering the value one character at a time, re-querying the field between inputs, and asserting the final value.
 
-This keeps the application-specific workaround in one place and avoids adding arbitrary waits throughout the tests.
+This keeps the application-specific workaround in one place and avoids adding arbitrary fixed waits throughout the tests.
 
 ### Add-to-Cart Flow
 
-The add-to-cart flow is shared by the checkout and regression tests and is kept in `support/helpers/cart.ts`.
+The add-to-cart operation is shared by the checkout and regression tests and is kept in `support/helpers/cart.ts`.
 
-The helper coordinates the relevant page objects and validates the operation at three points:
+The helper validates the operation at two points:
 
 1. The native confirmation alert contains the expected `Product added` message.
 2. The `POST /addtocart` request returns HTTP 200.
-3. The selected product is present in the cart.
 
 The network request is used for synchronization instead of a fixed wait:
 
@@ -204,24 +230,59 @@ cy.wait('@addToCart')
     .should('eq', 200)
 ```
 
-This provides confirmation that the request completed successfully while the final cart assertion verifies the expected UI state.
+After the add-to-cart operation completes, each relevant test explicitly opens the cart and verifies that the expected product is displayed.
+
+Keeping cart navigation outside the helper makes the navigation visible in the scenario and avoids unnecessary page transitions.
+
+### Cart State and Synchronization
+
+DemoBlaze can persist cart items between sessions, particularly for authenticated users.
+
+The authenticated checkout scenario therefore establishes a known cart state before adding the product under test.
+
+Cart cleanup uses DemoBlaze's cart network requests for synchronization rather than arbitrary fixed waits:
+
+- `POST /viewcart` determines the current cart contents.
+- `POST /deleteitem` confirms that a delete operation completed.
+- The actual `Delete` control is awaited before attempting the UI interaction.
+
+This was necessary because the cart container can be present before its product rows are rendered.
+
+Negative checkout scenarios also remove the product they created after validating the expected checkout error because those scenarios intentionally stop before completing a purchase.
+
+This prevents test-created cart data from affecting later scenarios or subsequent test runs.
+
+### Purchase Validation
+
+The successful checkout tests validate more than the presence of the success dialog.
+
+The purchase confirmation is checked for:
+
+- `Thank you for your purchase!`
+- The transaction amount shown in the confirmation
+
+The reported transaction amount must match the expected product price from the product fixture.
+
+This verifies the business outcome of the checkout rather than treating the appearance of a success dialog alone as sufficient evidence of a successful purchase.
 
 ### Alert Handling
 
-DemoBlaze showed inconsistent punctuation in the native add-to-cart confirmation during test execution.
-
-The following variations were observed:
+During execution of the shared add-to-cart flow, DemoBlaze returned two variations of the native confirmation message:
 
 - `Product added.`
 - `Product added`
 
-Since both messages represent the same successful add-to-cart action, the shared cart helper accepts an optional trailing period:
+These variations were encountered across tests that use the shared `addProductToCart()` workflow, including the checkout and cart regression scenarios (TC-02, TC-03, TC-05, TC-06, TC-07, TC-11, and TC-12).
+
+The variation was not tied to a specific test case; the same add-to-cart operation could return either message across different executions.
+
+Since both messages represent the same successful add-to-cart action, the shared helper accepts an optional trailing period:
 
 ```typescript
 expect(message.trim()).to.match(/^Product added\.?$/)
 ```
 
-The alert is not used as the only success condition. The helper also checks the `/addtocart` response and verifies that the expected product is present in the cart.
+The alert is not used as the only success condition. The helper also verifies that the `POST /addtocart` request returns HTTP 200, and the relevant scenario subsequently verifies that the expected product is displayed in the cart.
 
 ### Empty-Cart Behavior
 
@@ -239,17 +300,27 @@ The three additional negative scenarios are therefore covered by:
 
 ## Test Approach
 
-The suite uses a lightweight Page Object Model to keep page-specific selectors and interactions separate from the test scenarios.
+The suite focuses on readable, deterministic tests without adding unnecessary framework complexity.
 
-`HomePage`, `ProductPage`, `CartPage`, and `LoginPage` own the interactions for their respective areas of the application. Reusable workflows that span multiple pages, such as adding a product to the cart, remain in a shared helper rather than being tied to a single page object.
+The implementation uses:
 
-The specs retain the scenario flow and expected behavior so the intent of each test remains visible.
+- Lightweight Page Object Model
+- Explicit scenario-level assertions
+- Fixture-based non-sensitive test data
+- Credentials separated from source control
+- Network-based synchronization where applicable
+- Controlled handling for observed input instability
+- Test IDs for requirement traceability
+- Tags for selective execution
+- Cart state management for test isolation
+- Purchase amount validation for successful checkout
+- HTML reporting with failure screenshots
 
-The suite also uses explicit assertions, network synchronization where applicable, fixture-based test data, test IDs for traceability, and tags for selective execution. The page objects are kept intentionally focused rather than creating abstractions for every UI component.
+Page objects are intentionally focused rather than creating abstractions for every UI component. Shared workflows are extracted when there is demonstrated reuse rather than adding abstraction preemptively.
 
 ## Verification
 
-Before finalizing the assessment, the suite was verified with:
+Before finalizing the assessment, TypeScript and the complete Cypress suite were verified with:
 
 ```bash
 npx tsc --noEmit
@@ -257,12 +328,16 @@ npm run cy:run
 npm run cy:headed
 ```
 
-TypeScript compilation completed without errors, and the full Cypress suite passed:
+TypeScript compilation completed without errors.
+
+The complete Cypress suite passed:
 
 ```text
 12 tests
 12 passing
 0 failing
 ```
+
+The full suite was also executed consecutively during final stability checks to verify that cart state from a previous run did not affect the next execution.
 
 The test suite completes without requiring manual browser interaction.
