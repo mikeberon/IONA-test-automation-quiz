@@ -7,6 +7,7 @@ import type { Customer } from '../../support/pages/cartPage'
 
 const customer: Customer = customerData.validCustomer
 const productName = productData.samsungGalaxyS6.name
+const productPrice = productData.samsungGalaxyS6.price
 
 describe('DemoBlaze - Checkout', () => {
 
@@ -23,27 +24,8 @@ describe('DemoBlaze - Checkout', () => {
     )
 
     it(
-        'TC-02 - should complete checkout as a guest',
-        { tags: ['@smoke', '@positive', '@checkout'] },
-        () => {
-            addProductToCart(productName)
-            cartPage.openCheckout()
-
-            cartPage.fillCheckoutForm(customer)
-            cartPage.clickPurchase()
-
-            cy.get('.sweet-alert')
-                .should('be.visible')
-                .within(() => {
-                    cy.get('h2')
-                        .should('have.text', 'Thank you for your purchase!')
-                })
-        }
-    )
-
-    it(
-        'TC-03 - should complete checkout as an authenticated user',
-        { tags: ['@smoke', '@positive', '@checkout', '@authentication'] },
+        'TC-02 - should complete checkout as an authenticated user',
+        { tags: ['@tc2', '@smoke', '@positive', '@checkout', '@authentication'] },
         () => {
             cy.env(['username', 'password'], { log: false })
                 .then(({ username, password }) => {
@@ -55,19 +37,35 @@ describe('DemoBlaze - Checkout', () => {
 
                     cy.login(username, password)
 
+                    // Ensure the authenticated user starts with a clean cart.
+                    cartPage.clearCart()
+                    homePage.open()
+
                     addProductToCart(productName)
                     cartPage.openCheckout()
 
                     cartPage.fillCheckoutForm(customer)
                     cartPage.clickPurchase()
 
-                    cy.get('.sweet-alert')
-                        .should('be.visible')
-                        .within(() => {
-                            cy.get('h2')
-                                .should('have.text', 'Thank you for your purchase!')
-                        })
+                    cartPage.verifyPurchaseConfirmation(productPrice)
                 })
+        }
+    )
+
+    it(
+        'TC-03 - should complete checkout as a guest',
+        { tags: ['@smoke', '@positive', '@checkout'] },
+        () => {
+            cartPage.clearCart()
+            homePage.open()
+
+            addProductToCart(productName)
+            cartPage.openCheckout()
+
+            cartPage.fillCheckoutForm(customer)
+            cartPage.clickPurchase()
+
+            cartPage.verifyPurchaseConfirmation(productPrice)
         }
     )
 
@@ -75,6 +73,9 @@ describe('DemoBlaze - Checkout', () => {
         'TC-05 - should prevent checkout when required fields are empty',
         { tags: ['@negative', '@checkout'] },
         () => {
+            cartPage.clearCart()
+            homePage.open()
+
             addProductToCart(productName)
             cartPage.openCheckout()
 
@@ -95,6 +96,9 @@ describe('DemoBlaze - Checkout', () => {
                 )
 
             cartPage.verifyCheckoutIsDisplayed()
+
+            cartPage.closeCheckout()
+            cartPage.removeProduct(productName)
         }
     )
 
@@ -102,6 +106,9 @@ describe('DemoBlaze - Checkout', () => {
         'TC-06 - should prevent checkout when credit card is empty',
         { tags: ['@negative', '@checkout'] },
         () => {
+            cartPage.clearCart()
+            homePage.open()
+
             addProductToCart(productName)
             cartPage.openCheckout()
 
@@ -122,13 +129,19 @@ describe('DemoBlaze - Checkout', () => {
                 )
 
             cartPage.verifyCheckoutIsDisplayed()
+
+            cartPage.closeCheckout()
+            cartPage.removeProduct(productName)
         }
     )
 
     it(
         'TC-07 - should prevent checkout when customer name is empty',
-        { tags: ['@negative', '@checkout'] },
+        { tags: ['@negative', '@checkout', '@tc7'] },
         () => {
+            cartPage.clearCart()
+            homePage.open()
+
             addProductToCart(productName)
             cartPage.openCheckout()
 
@@ -149,6 +162,9 @@ describe('DemoBlaze - Checkout', () => {
                 )
 
             cartPage.verifyCheckoutIsDisplayed()
+
+            cartPage.closeCheckout()
+            cartPage.removeProduct(productName)
         }
     )
 })
