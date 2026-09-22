@@ -4,95 +4,104 @@ describe('DemoBlaze - Authentication', () => {
         cy.visit('/')
     })
 
-    it('TC-09 - should log in with valid credentials', () => {
-        const username = Cypress.env('username')
-        const password = Cypress.env('password')
+    it(
+        'TC-09 - should log in with valid credentials',
+        { tags: ['@positive', '@authentication', '@regression'] },
+        () => {
+            const username = Cypress.env('username')
+            const password = Cypress.env('password')
 
-        expect(username, 'username environment variable')
-            .to.be.a('string')
-            .and.not.be.empty
+            expect(username, 'username environment variable')
+                .to.be.a('string')
+                .and.not.be.empty
 
-        expect(password, 'password environment variable')
-            .to.be.a('string')
-            .and.not.be.empty
+            expect(password, 'password environment variable')
+                .to.be.a('string')
+                .and.not.be.empty
 
-        cy.login(username, password)
-    })
-
-    it('TC-04 - should reject login with an incorrect password', () => {
-        const username = Cypress.env('username')
-        const invalidPassword = 'pw_invalid'
-
-        expect(username, 'username environment variable')
-            .to.be.a('string')
-            .and.not.be.empty
-
-        cy.get('#login2')
-            .should('be.visible')
-            .click()
-
-        cy.get('#logInModal')
-            .should('be.visible')
-
-        // Valid username + intentionally invalid password
-        cy.typeSlowly('#loginusername', username)
-
-        cy.typeSlowly('#loginpassword', invalidPassword, {
-            log: false
+            cy.login(username, password)
         })
 
-        const alertSpy = cy.spy().as('loginAlert')
+    it(
+        'TC-04 - should reject login with an incorrect password',
+        { tags: ['@negative', '@authentication'] },
+        () => {
+            const username = Cypress.env('username')
+            const invalidPassword = 'pw_invalid'
 
-        cy.on('window:alert', alertSpy)
+            expect(username, 'username environment variable')
+                .to.be.a('string')
+                .and.not.be.empty
 
-        cy.contains('#logInModal button', 'Log in')
-            .should('be.visible')
-            .and('be.enabled')
-            .click()
+            cy.get('#login2')
+                .should('be.visible')
+                .click()
 
-        cy.get('@loginAlert')
-            .should('have.been.calledOnceWith', 'Wrong password.')
+            cy.get('#logInModal')
+                .should('be.visible')
 
-        // Verify authentication did not succeed
-        cy.get('#nameofuser')
-            .should('not.be.visible')
-    })
+            // Valid username + intentionally invalid password
+            cy.typeSlowly('#loginusername', username)
 
-    it('TC-08 - should reject login when username and password are empty', () => {
-        cy.get('#login2')
-            .should('be.visible')
-            .click()
+            cy.typeSlowly('#loginpassword', invalidPassword, {
+                log: false
+            })
 
-        cy.get('#logInModal')
-            .should('be.visible')
+            const alertSpy = cy.spy().as('loginAlert')
 
-        // Verify both fields are intentionally empty
-        cy.get('#loginusername')
-            .should('be.visible')
-            .and('have.value', '')
+            cy.on('window:alert', alertSpy)
 
-        cy.get('#loginpassword')
-            .should('be.visible')
-            .and('have.value', '')
+            cy.contains('#logInModal button', 'Log in')
+                .should('be.visible')
+                .and('be.enabled')
+                .click()
 
-        // Intercept login validation alert
-        cy.window().then((win) => {
-            cy.stub(win, 'alert' as keyof typeof win).as('loginAlert')
+            cy.get('@loginAlert')
+                .should('have.been.calledOnceWith', 'Wrong password.')
+
+            // Verify authentication did not succeed
+            cy.get('#nameofuser')
+                .should('not.be.visible')
         })
 
-        cy.contains('#logInModal button', 'Log in')
-            .should('be.visible')
-            .and('be.enabled')
-            .click()
+    it(
+        'TC-08 - should reject login when username and password are empty',
+        { tags: ['@negative', '@authentication'] },
+        () => {
+            cy.get('#login2')
+                .should('be.visible')
+                .click()
 
-        cy.get('@loginAlert')
-            .should(
-                'have.been.calledOnceWith',
-                'Please fill out Username and Password.'
-            )
+            cy.get('#logInModal')
+                .should('be.visible')
 
-        // Verify authentication did not succeed
-        cy.get('#nameofuser')
-            .should('not.be.visible')
-    })
+            // Verify both fields are intentionally empty
+            cy.get('#loginusername')
+                .should('be.visible')
+                .and('have.value', '')
+
+            cy.get('#loginpassword')
+                .should('be.visible')
+                .and('have.value', '')
+
+            // Intercept login validation alert
+            cy.window().then((win) => {
+                cy.stub(win, 'alert' as keyof typeof win).as('loginAlert')
+            })
+
+            cy.contains('#logInModal button', 'Log in')
+                .should('be.visible')
+                .and('be.enabled')
+                .click()
+
+            cy.get('@loginAlert')
+                .should(
+                    'have.been.calledOnceWith',
+                    'Please fill out Username and Password.'
+                )
+
+            // Verify authentication did not succeed
+            cy.get('#nameofuser')
+                .should('not.be.visible')
+        })
 })

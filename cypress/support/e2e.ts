@@ -15,6 +15,9 @@
 
 // Import commands.js using ES2015 syntax:
 import './commands';
+import { register as registerCypressGrep } from '@cypress/grep'
+
+registerCypressGrep()
 
 // Helper function to generate random email address
 export const generateRandomEmail = (): string => {

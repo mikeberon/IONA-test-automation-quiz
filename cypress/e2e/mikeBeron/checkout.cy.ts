@@ -79,138 +79,156 @@ describe('DemoBlaze - Checkout', () => {
         cy.visit('/')
     })
 
-    it('TC-01 - should display the homepage', () => {
-        cy.get('#nava')
-            .should('be.visible')
-            .and('contain.text', 'PRODUCT STORE')
-    })
+    it(
+        'TC-01 - should display the homepage',
+        { tags: ['@smoke', '@regression'] },
+        () => {
+            cy.get('#nava')
+                .should('be.visible')
+                .and('contain.text', 'PRODUCT STORE')
+        })
 
-    it('TC-02 - should complete checkout as a guest', () => {
-        addProductToCart(productName)
-        openCheckout()
+    it(
+        'TC-02 - should complete checkout as a guest',
+        { tags: ['@smoke', '@positive', '@checkout'] },
+        () => {
+            addProductToCart(productName)
+            openCheckout()
 
-        fillCheckoutForm(customer)
-        clickPurchase()
+            fillCheckoutForm(customer)
+            clickPurchase()
 
-        cy.get('.sweet-alert')
-            .should('be.visible')
-            .within(() => {
-                cy.get('h2')
-                    .should('have.text', 'Thank you for your purchase!')
+            cy.get('.sweet-alert')
+                .should('be.visible')
+                .within(() => {
+                    cy.get('h2')
+                        .should('have.text', 'Thank you for your purchase!')
+                })
+        })
+
+    it(
+        'TC-03 - should complete checkout as an authenticated user',
+        { tags: ['@smoke', '@positive', '@checkout', '@authentication'] },
+        () => {
+            const username = Cypress.env('username')
+            const password = Cypress.env('password')
+
+            expect(username, 'username environment variable')
+                .to.be.a('string')
+                .and.not.be.empty
+
+            expect(password, 'password environment variable')
+                .to.be.a('string')
+                .and.not.be.empty
+
+            cy.login(username, password)
+
+            addProductToCart(productName)
+            openCheckout()
+
+            fillCheckoutForm(customer)
+            clickPurchase()
+
+            cy.get('.sweet-alert')
+                .should('be.visible')
+                .within(() => {
+                    cy.get('h2')
+                        .should('have.text', 'Thank you for your purchase!')
+                })
+        })
+
+    it(
+        'TC-05 - should prevent checkout when required fields are empty',
+        { tags: ['@negative', '@checkout'] },
+        () => {
+            addProductToCart(productName)
+            openCheckout()
+
+            cy.get('#name')
+                .should('have.value', '')
+
+            cy.get('#card')
+                .should('have.value', '')
+
+            // Intercept checkout validation alert
+            cy.window().then((win) => {
+                cy.stub(win, 'alert' as keyof typeof win).as('checkoutAlert')
             })
-    })
 
-    it('TC-03 - should complete a purchase as an authenticated user', () => {
-        const username = Cypress.env('username')
-        const password = Cypress.env('password')
+            clickPurchase()
 
-        expect(username, 'username environment variable')
-            .to.be.a('string')
-            .and.not.be.empty
+            cy.get('@checkoutAlert')
+                .should(
+                    'have.been.calledOnceWith',
+                    'Please fill out Name and Creditcard.'
+                )
 
-        expect(password, 'password environment variable')
-            .to.be.a('string')
-            .and.not.be.empty
+            // Checkout modal should remain open
+            cy.get('#orderModal')
+                .should('be.visible')
+        })
 
-        cy.login(username, password)
+    it(
+        'TC-06 - should prevent checkout when credit card is empty',
+        { tags: ['@negative', '@checkout'] },
+        () => {
+            addProductToCart(productName)
+            openCheckout()
 
-        addProductToCart(productName)
-        openCheckout()
+            // Name is provided
+            cy.typeSlowly('#name', customer.name)
 
-        fillCheckoutForm(customer)
-        clickPurchase()
+            // Credit Card intentionally left empty
+            cy.get('#card')
+                .should('have.value', '')
 
-        cy.get('.sweet-alert')
-            .should('be.visible')
-            .within(() => {
-                cy.get('h2')
-                    .should('have.text', 'Thank you for your purchase!')
+            // Intercept checkout validation alert
+            cy.window().then((win) => {
+                cy.stub(win, 'alert' as keyof typeof win).as('checkoutAlert')
             })
-    })
 
-    it('TC-05 - should prevent checkout when required fields are empty', () => {
-        addProductToCart(productName)
-        openCheckout()
+            clickPurchase()
 
-        cy.get('#name')
-            .should('have.value', '')
+            cy.get('@checkoutAlert')
+                .should(
+                    'have.been.calledOnceWith',
+                    'Please fill out Name and Creditcard.'
+                )
 
-        cy.get('#card')
-            .should('have.value', '')
-
-        // Intercept checkout validation alert
-        cy.window().then((win) => {
-            cy.stub(win, 'alert' as keyof typeof win).as('checkoutAlert')
+            // Checkout modal should remain open
+            cy.get('#orderModal')
+                .should('be.visible')
         })
 
-        clickPurchase()
+    it(
+        'TC-07 - should prevent checkout when customer name is empty',
+        { tags: ['@negative', '@checkout'] },
+        () => {
+            addProductToCart(productName)
+            openCheckout()
 
-        cy.get('@checkoutAlert')
-            .should(
-                'have.been.calledOnceWith',
-                'Please fill out Name and Creditcard.'
-            )
+            // Name intentionally left empty
+            cy.get('#name')
+                .should('have.value', '')
 
-        // Checkout modal should remain open
-        cy.get('#orderModal')
-            .should('be.visible')
-    })
+            // Credit Card is provided
+            cy.typeSlowly('#card', customer.card)
 
-    it('TC-06 - should prevent checkout when credit card is empty', () => {
-        addProductToCart(productName)
-        openCheckout()
+            // Intercept checkout validation alert
+            cy.window().then((win) => {
+                cy.stub(win, 'alert' as keyof typeof win).as('checkoutAlert')
+            })
 
-        // Name is provided
-        cy.typeSlowly('#name', customer.name)
+            clickPurchase()
 
-        // Credit Card intentionally left empty
-        cy.get('#card')
-            .should('have.value', '')
+            cy.get('@checkoutAlert')
+                .should(
+                    'have.been.calledOnceWith',
+                    'Please fill out Name and Creditcard.'
+                )
 
-        // Intercept checkout validation alert
-        cy.window().then((win) => {
-            cy.stub(win, 'alert' as keyof typeof win).as('checkoutAlert')
+            // Checkout modal should remain open
+            cy.get('#orderModal')
+                .should('be.visible')
         })
-
-        clickPurchase()
-
-        cy.get('@checkoutAlert')
-            .should(
-                'have.been.calledOnceWith',
-                'Please fill out Name and Creditcard.'
-            )
-
-        // Checkout modal should remain open
-        cy.get('#orderModal')
-            .should('be.visible')
-    })
-
-    it('TC-07 - should prevent checkout when name is empty', () => {
-        addProductToCart(productName)
-        openCheckout()
-
-        // Name intentionally left empty
-        cy.get('#name')
-            .should('have.value', '')
-
-        // Credit Card is provided
-        cy.typeSlowly('#card', customer.card)
-
-        // Intercept checkout validation alert
-        cy.window().then((win) => {
-            cy.stub(win, 'alert' as keyof typeof win).as('checkoutAlert')
-        })
-
-        clickPurchase()
-
-        cy.get('@checkoutAlert')
-            .should(
-                'have.been.calledOnceWith',
-                'Please fill out Name and Creditcard.'
-            )
-
-        // Checkout modal should remain open
-        cy.get('#orderModal')
-            .should('be.visible')
-    })
 })
