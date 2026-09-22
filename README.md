@@ -313,21 +313,31 @@ The reported amount must match the expected product price defined in the product
 
 This provides a stronger business-level assertion by confirming that the expected transaction value was processed.
 
-### Empty-Cart Behavior
+### Observed Application Validation Gaps
 
-Checkout with no cart items was evaluated as a potential additional negative scenario.
+Additional negative scenarios were evaluated against the current DemoBlaze behavior before determining the final automated coverage.
 
-Manual verification confirmed that DemoBlaze currently allows the checkout/purchase flow to proceed with an empty cart.
+#### Empty-Cart Checkout
 
-A negative automated assertion was therefore not added because it would encode behavior that the application does not currently enforce.
+Manual verification confirmed that DemoBlaze currently allows the checkout/purchase flow to proceed with no items in the cart.
 
-The three additional negative scenarios are covered by:
+A negative automated assertion was not added because the application does not currently enforce an empty-cart restriction.
+
+#### Credit Card Format
+
+Manual verification also confirmed that the checkout form accepts non-numeric and incorrectly formatted credit card values, including alphabetic characters, and still allows the purchase flow to proceed.
+
+The application currently validates that the credit card field is populated but does not enforce an expected numeric format.
+
+An automated test expecting invalid card formats to be rejected was therefore not added, as that assertion would not reflect the application's current behavior.
+
+The three additional automated negative scenarios are covered by:
 
 - TC-06 - checkout without a credit card
 - TC-07 - checkout without a customer name
 - TC-08 - login with both username and password empty
 
-In a production delivery workflow, the empty-cart behavior would be raised for product/requirement clarification and tracked as a defect if confirmed to violate the intended business rule.
+In a production delivery workflow, both the empty-cart checkout and missing credit card format validation would be raised for product/requirement clarification. If confirmed as violations of the intended business rules, they would be tracked as defects and automated once the expected behavior was defined.
 
 ## Test Strategy
 
