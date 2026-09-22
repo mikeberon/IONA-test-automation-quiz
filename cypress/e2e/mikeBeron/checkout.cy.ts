@@ -27,7 +27,6 @@ describe('DemoBlaze - Checkout', () => {
         'TC-02 - should complete checkout as an authenticated user',
         {
             tags: [
-                '@tc2',
                 '@smoke',
                 '@positive',
                 '@checkout',
