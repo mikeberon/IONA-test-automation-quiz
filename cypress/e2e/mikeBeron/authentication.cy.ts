@@ -1,7 +1,10 @@
+import { homePage } from '../../support/pages/homePage'
+import { loginPage } from '../../support/pages/loginPage'
+
 describe('DemoBlaze - Authentication', () => {
 
     beforeEach(() => {
-        cy.visit('/')
+        homePage.open()
     })
 
     it(
@@ -32,27 +35,15 @@ describe('DemoBlaze - Authentication', () => {
                     expect(Boolean(username), 'username is configured')
                         .to.be.true
 
-                    cy.get('#login2')
-                        .should('be.visible')
-                        .click()
-
-                    cy.get('#logInModal')
-                        .should('be.visible')
-
-                    cy.typeSlowly('#loginusername', username)
-
-                    cy.typeSlowly('#loginpassword', invalidPassword, {
-                        log: false
-                    })
+                    loginPage.open()
+                    loginPage.enterUsername(username)
+                    loginPage.enterPassword(invalidPassword)
 
                     const alertSpy = cy.spy().as('loginAlert')
 
                     cy.on('window:alert', alertSpy)
 
-                    cy.contains('#logInModal button', 'Log in')
-                        .should('be.visible')
-                        .and('be.enabled')
-                        .click()
+                    loginPage.submit()
 
                     cy.get('@loginAlert')
                         .should(
@@ -60,8 +51,7 @@ describe('DemoBlaze - Authentication', () => {
                             'Wrong password.'
                         )
 
-                    cy.get('#nameofuser')
-                        .should('not.be.visible')
+                    loginPage.verifyUserIsNotLoggedIn()
                 })
         }
     )
@@ -70,30 +60,17 @@ describe('DemoBlaze - Authentication', () => {
         'TC-08 - should reject login when username and password are empty',
         { tags: ['@negative', '@authentication'] },
         () => {
-            cy.get('#login2')
-                .should('be.visible')
-                .click()
+            loginPage.open()
 
-            cy.get('#logInModal')
-                .should('be.visible')
-
-            cy.get('#loginusername')
-                .should('be.visible')
-                .and('have.value', '')
-
-            cy.get('#loginpassword')
-                .should('be.visible')
-                .and('have.value', '')
+            loginPage.verifyUsernameIsEmpty()
+            loginPage.verifyPasswordIsEmpty()
 
             cy.window().then((win) => {
                 cy.stub(win, 'alert' as keyof typeof win)
                     .as('loginAlert')
             })
 
-            cy.contains('#logInModal button', 'Log in')
-                .should('be.visible')
-                .and('be.enabled')
-                .click()
+            loginPage.submit()
 
             cy.get('@loginAlert')
                 .should(
@@ -101,8 +78,7 @@ describe('DemoBlaze - Authentication', () => {
                     'Please fill out Username and Password.'
                 )
 
-            cy.get('#nameofuser')
-                .should('not.be.visible')
+            loginPage.verifyUserIsNotLoggedIn()
         }
     )
 })

@@ -1,5 +1,8 @@
 import productData from '../../fixtures/products.json'
 import { addProductToCart } from '../../support/helpers/cart'
+import { homePage } from '../../support/pages/homePage'
+import { productPage } from '../../support/pages/productPage'
+import { cartPage } from '../../support/pages/cartPage'
 
 describe('DemoBlaze - Regression', () => {
 
@@ -7,24 +10,19 @@ describe('DemoBlaze - Regression', () => {
     const productPrice = productData.samsungGalaxyS6.price
 
     beforeEach(() => {
-        cy.visit('/')
+        homePage.open()
     })
 
     it(
         'TC-10 - should display the correct product details',
         { tags: ['@regression'] },
         () => {
-            cy.contains('.hrefch', productName)
-                .should('be.visible')
-                .click()
+            homePage.selectProduct(productName)
 
-            cy.get('.name')
-                .should('be.visible')
-                .and('have.text', productName)
-
-            cy.get('.price-container')
-                .should('be.visible')
-                .and('contain.text', `$${productPrice}`)
+            productPage.verifyProductDetails(
+                productName,
+                productPrice
+            )
         }
     )
 
@@ -34,9 +32,7 @@ describe('DemoBlaze - Regression', () => {
         () => {
             addProductToCart(productName)
 
-            cy.get('#totalp')
-                .should('be.visible')
-                .and('have.text', productPrice.toString())
+            cartPage.verifyTotal(productPrice)
         }
     )
 
@@ -46,15 +42,8 @@ describe('DemoBlaze - Regression', () => {
         () => {
             addProductToCart(productName)
 
-            cy.contains('#tbodyid tr', productName)
-                .within(() => {
-                    cy.contains('a', 'Delete')
-                        .should('be.visible')
-                        .click()
-                })
-
-            cy.contains('#tbodyid td', productName)
-                .should('not.exist')
+            cartPage.removeProduct(productName)
+            cartPage.verifyProductIsRemoved(productName)
         }
     )
 })

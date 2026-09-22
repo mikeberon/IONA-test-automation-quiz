@@ -1,26 +1,22 @@
+import { homePage } from '../pages/homePage'
+import { productPage } from '../pages/productPage'
+import { cartPage } from '../pages/cartPage'
+
 export const addProductToCart = (productName: string) => {
     cy.intercept('POST', '**/addtocart').as('addToCart')
 
-    cy.contains('.hrefch', productName)
-        .should('be.visible')
-        .click()
+    homePage.selectProduct(productName)
 
     cy.once('window:alert', (message) => {
         expect(message.trim()).to.match(/^Product added\.?$/)
     })
 
-    cy.contains('a', 'Add to cart')
-        .should('be.visible')
-        .click()
+    productPage.addToCart()
 
     cy.wait('@addToCart')
         .its('response.statusCode')
         .should('eq', 200)
 
-    cy.get('#cartur')
-        .should('be.visible')
-        .click()
-
-    cy.contains('#tbodyid td', productName)
-        .should('be.visible')
+    cartPage.open()
+    cartPage.verifyProductIsDisplayed(productName)
 }

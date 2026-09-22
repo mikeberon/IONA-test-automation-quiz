@@ -1,59 +1,24 @@
 import customerData from '../../fixtures/customer.json'
 import productData from '../../fixtures/products.json'
 import { addProductToCart } from '../../support/helpers/cart'
-
-type Customer = {
-    name: string
-    country: string
-    city: string
-    card: string
-    month: string
-    year: string
-}
+import { homePage } from '../../support/pages/homePage'
+import { cartPage } from '../../support/pages/cartPage'
+import type { Customer } from '../../support/pages/cartPage'
 
 const customer: Customer = customerData.validCustomer
 const productName = productData.samsungGalaxyS6.name
 
-const openCheckout = () => {
-    cy.contains('button', 'Place Order')
-        .should('be.visible')
-        .and('be.enabled')
-        .click()
-
-    cy.get('#orderModal')
-        .should('be.visible')
-}
-
-const fillCheckoutForm = (customer: Customer) => {
-    cy.typeSlowly('#name', customer.name)
-    cy.typeSlowly('#country', customer.country)
-    cy.typeSlowly('#city', customer.city)
-    cy.typeSlowly('#card', customer.card)
-    cy.typeSlowly('#month', customer.month)
-    cy.typeSlowly('#year', customer.year)
-}
-
-const clickPurchase = () => {
-    cy.contains('#orderModal button', 'Purchase')
-        .scrollIntoView()
-        .should('be.visible')
-        .and('be.enabled')
-        .click()
-}
-
 describe('DemoBlaze - Checkout', () => {
 
     beforeEach(() => {
-        cy.visit('/')
+        homePage.open()
     })
 
     it(
         'TC-01 - should display the homepage',
         { tags: ['@smoke', '@regression'] },
         () => {
-            cy.get('#nava')
-                .should('be.visible')
-                .and('contain.text', 'PRODUCT STORE')
+            homePage.verifyStoreIsDisplayed()
         }
     )
 
@@ -62,10 +27,10 @@ describe('DemoBlaze - Checkout', () => {
         { tags: ['@smoke', '@positive', '@checkout'] },
         () => {
             addProductToCart(productName)
-            openCheckout()
+            cartPage.openCheckout()
 
-            fillCheckoutForm(customer)
-            clickPurchase()
+            cartPage.fillCheckoutForm(customer)
+            cartPage.clickPurchase()
 
             cy.get('.sweet-alert')
                 .should('be.visible')
@@ -91,10 +56,10 @@ describe('DemoBlaze - Checkout', () => {
                     cy.login(username, password)
 
                     addProductToCart(productName)
-                    openCheckout()
+                    cartPage.openCheckout()
 
-                    fillCheckoutForm(customer)
-                    clickPurchase()
+                    cartPage.fillCheckoutForm(customer)
+                    cartPage.clickPurchase()
 
                     cy.get('.sweet-alert')
                         .should('be.visible')
@@ -111,20 +76,17 @@ describe('DemoBlaze - Checkout', () => {
         { tags: ['@negative', '@checkout'] },
         () => {
             addProductToCart(productName)
-            openCheckout()
+            cartPage.openCheckout()
 
-            cy.get('#name')
-                .should('have.value', '')
-
-            cy.get('#card')
-                .should('have.value', '')
+            cartPage.verifyNameIsEmpty()
+            cartPage.verifyCardIsEmpty()
 
             cy.window().then((win) => {
                 cy.stub(win, 'alert' as keyof typeof win)
                     .as('checkoutAlert')
             })
 
-            clickPurchase()
+            cartPage.clickPurchase()
 
             cy.get('@checkoutAlert')
                 .should(
@@ -132,8 +94,7 @@ describe('DemoBlaze - Checkout', () => {
                     'Please fill out Name and Creditcard.'
                 )
 
-            cy.get('#orderModal')
-                .should('be.visible')
+            cartPage.verifyCheckoutIsDisplayed()
         }
     )
 
@@ -142,19 +103,17 @@ describe('DemoBlaze - Checkout', () => {
         { tags: ['@negative', '@checkout'] },
         () => {
             addProductToCart(productName)
-            openCheckout()
+            cartPage.openCheckout()
 
-            cy.typeSlowly('#name', customer.name)
-
-            cy.get('#card')
-                .should('have.value', '')
+            cartPage.enterName(customer.name)
+            cartPage.verifyCardIsEmpty()
 
             cy.window().then((win) => {
                 cy.stub(win, 'alert' as keyof typeof win)
                     .as('checkoutAlert')
             })
 
-            clickPurchase()
+            cartPage.clickPurchase()
 
             cy.get('@checkoutAlert')
                 .should(
@@ -162,8 +121,7 @@ describe('DemoBlaze - Checkout', () => {
                     'Please fill out Name and Creditcard.'
                 )
 
-            cy.get('#orderModal')
-                .should('be.visible')
+            cartPage.verifyCheckoutIsDisplayed()
         }
     )
 
@@ -172,19 +130,17 @@ describe('DemoBlaze - Checkout', () => {
         { tags: ['@negative', '@checkout'] },
         () => {
             addProductToCart(productName)
-            openCheckout()
+            cartPage.openCheckout()
 
-            cy.get('#name')
-                .should('have.value', '')
-
-            cy.typeSlowly('#card', customer.card)
+            cartPage.verifyNameIsEmpty()
+            cartPage.enterCard(customer.card)
 
             cy.window().then((win) => {
                 cy.stub(win, 'alert' as keyof typeof win)
                     .as('checkoutAlert')
             })
 
-            clickPurchase()
+            cartPage.clickPurchase()
 
             cy.get('@checkoutAlert')
                 .should(
@@ -192,8 +148,7 @@ describe('DemoBlaze - Checkout', () => {
                     'Please fill out Name and Creditcard.'
                 )
 
-            cy.get('#orderModal')
-                .should('be.visible')
+            cartPage.verifyCheckoutIsDisplayed()
         }
     )
 })
